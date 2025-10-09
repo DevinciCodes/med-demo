@@ -1,4 +1,16 @@
 🔀 Git Workflow (Team Standard)
+
+
+```
+cd client
+npm run dev
+```
+new terminal
+
+```
+cd server
+npm run dev
+```
 Always pull latest changes before starting work:
 ```
 git checkout main
