@@ -1,0 +1,48 @@
+/* src/home.css */
+.home {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  flex-direction: column;
+  text-align: center;
+}
+
+.home-title {
+  font-size: 4rem;
+  font-weight: 900;
+  color: #b5d0f5;
+  margin-bottom: 0.5rem;
+}
+
+.home-title span {
+  color: #7ca4e0;
+}
+
+.home-subtitle {
+  font-size: 1rem;
+  color: #d4e3f3;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.button-group {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.login-btn {
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.login-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px);
+}
