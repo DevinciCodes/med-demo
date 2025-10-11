@@ -74,6 +74,23 @@ body {
   transform: translateY(-2px);
 }
 
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.login-form, 
+.login-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-weight: 600;
+  transition: all 0.25s ease;
+}
+
 /* ----------- MODAL ----------- */
 .modal-backdrop {
   position: fixed;
