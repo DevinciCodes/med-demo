@@ -9,8 +9,12 @@ export default function PrescriptionForm() {
 
   const [formData, setFormData] = useState({
     medication: "",
-    dosage: "",
+    strength: "",
+    DAW: "",
     instructions: "",
+    dosage: "",
+    quantity: "",
+    refills: "",
 
   });
 
@@ -50,18 +54,23 @@ export default function PrescriptionForm() {
           type="text"
           name="DAW"
           placeholder="DAW"
-          value={formData.medication}
+          value={formData.DAW}
           onChange={handleChange}
           required
         />
-        <input
-          type="text"
-          name="sig"
+        <textarea
+          name="instructions"
           placeholder="Instructions"
           value={formData.instructions}
           onChange={handleChange}
           required
-          style={{ height: "8rem"}}
+          rows={4}
+          style={{
+            resize: "none",          // prevents dragging to resize
+            width: "100%",           // fills available width
+            padding: "0.5rem",
+            fontFamily: "inherit",
+          }}
         />
         <input
           type="text"
@@ -71,7 +80,22 @@ export default function PrescriptionForm() {
           onChange={handleChange}
           required
         />
-        
+          <input
+          type="text"
+          name="quantity"
+          placeholder="Quantity"
+          value={formData.quantity}
+          onChange={handleChange}
+          required
+        />        
+        <input
+          type="text"
+          name="refills"
+          placeholder="# Refills"
+          value={formData.refills}
+          onChange={handleChange}
+          required
+        />
         <button className="login-btn" type="submit">Submit Prescription</button>
       </form>
     </div>

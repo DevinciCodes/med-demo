@@ -1,12 +1,4 @@
-// <<<<<<< HEAD
-// import Home from "./pages/Home";
-
-// export default function App() {
-//   return <Home />;
-// }
-
-// =======
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import PatientDashboard from "./pages/Patient_Dashboard";
@@ -18,31 +10,41 @@ export default function App() {
   const { user, userType } = useAuth();
 
   return (
-    <Router>
-      <Routes>
-        {/* Public page */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/" element={<Home />} />
+    <Routes>
+      {/* Default route redirects to login */}
+      <Route path="/" element={<Navigate to="/login" />} />
+      
+      {/* Public page */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/home" element={<Home />} />
 
-        {/* Protected dashboards */}
-        <Route
-          path="/patient"
-          element={user && userType === "patient" ? <PatientDashboard /> : <Navigate to="/login" />}
-        />
+      {/* Protected dashboards */}
+      <Route
+        path="/patient"
+        element={
+          user && userType === "patient" ? (
+            <PatientDashboard />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
 
-        <Route
-          path="/provider"
-          element={user && userType === "provider" ? <ProviderDashboard /> : <Navigate to="/login" />}
-        />
-        <Route 
-          path="/provider/prescription"
-          element={<PrescriptionForm />} 
-        />
-        
-        {/* Catch-all redirects */}
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </Router>
+      <Route
+        path="/provider"
+        element={
+          user && userType === "provider" ? (
+            <ProviderDashboard />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+
+      <Route path="/provider/prescription" element={<PrescriptionForm />} />
+
+      {/* Catch-all redirects */}
+      <Route path="*" element={<Navigate to="/" />} />
+    </Routes>
   );
 }
-// >>>>>>> 8c76dcd (added provider dashboard and prescription page, bypassed firebase)

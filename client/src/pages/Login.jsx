@@ -6,14 +6,15 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleLogin = (type) => {
-    // Mock user login
-    setUser({ uid: "123", email: "test@example.com" });
-    setUserType(type);
+  setUser({ uid: "123", email: "test@example.com" });
+  setUserType(type);
 
-    // Navigate to the appropriate dashboard
+  // Delay navigation until React updates context
+  setTimeout(() => {
     if (type === "patient") navigate("/patient");
     else if (type === "provider") navigate("/provider");
-  };
+  }, 100);
+};
 
   return (
     <div style={{ padding: "2rem" }}>
