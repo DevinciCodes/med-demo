@@ -1,0 +1,33 @@
+.sidebar {
+  width: 220px;
+  height: 100vh;
+  background-color: #2c3e50;
+  color: white;
+  display: flex;
+  flex-direction: column; /* stack children vertically */
+  padding: 1rem;
+  position: fixed;
+}
+
+.sidebar h2 {
+  margin-bottom: 2rem;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column; /* vertical stack */
+  gap: 1rem;              /* spacing between links */
+}
+
+.sidebar-nav a {
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem;
+  border-radius: 5px;
+  display: block;          /* ensures each link takes its own line */
+}
+
+.sidebar-nav a.active {
+  background-color: #1abc9c;
+  font-weight: bold;
+}
