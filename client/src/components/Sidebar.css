@@ -31,3 +31,18 @@
   background-color: #1abc9c;
   font-weight: bold;
 }
+
+/* 👇 this pushes the logout button to the bottom */
+.logout-btn {
+  margin-top: auto;
+  background-color: #e74c3c;
+  border: none;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background-color: #c0392b;
+}
