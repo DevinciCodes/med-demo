@@ -1,50 +1,74 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "./pages/Login";
-import Home from "./pages/Home";
+// src/App.jsx
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 import PatientDashboard from "./pages/Patient_Dashboard";
 import ProviderDashboard from "./pages/Provider_Dashboard";
-import PrescriptionForm from "./pages/PrescriptionForm";
-import { useAuth } from "./context/AuthContext";
+import ForcePasswordReset from "./pages/ForcePasswordReset";
+
+import Login from "./pages/Login";
+import Home from "./pages/Home";
+
+function LoadingScreen() {
+  return <div style={{ padding: "2rem" }}>Loading…</div>;
+}
+
+/** /patients -> /patients/:uid (supports mock + real) */
+function PatientsIndexRedirect() {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
+
+  const uid =
+    user?.uid ||
+    (() => {
+      try { return JSON.parse(localStorage.getItem("mockUser"))?.uid || null; }
+      catch { return null; }
+    })();
+
+  if (!uid) return <Navigate to="/home" replace />;
+  return <Navigate to={`/patients/${uid}`} replace />;
+}
+
+/** Guarded patient route at /patients/:uid */
+function PatientRoute() {
+  const { user, loading } = useAuth();
+  const { uid } = useParams();
+  if (loading) return <LoadingScreen />;
+
+  const currentUid =
+    user?.uid ||
+    (() => {
+      try { return JSON.parse(localStorage.getItem("mockUser"))?.uid || null; }
+      catch { return null; }
+    })();
+
+  if (!currentUid) return <Navigate to="/home" replace />;
+  if (uid !== currentUid) return <Navigate to={`/patients/${currentUid}`} replace />;
+
+  return <PatientDashboard />;
+}
 
 export default function App() {
-  const { user, userType } = useAuth();
-
   return (
     <Routes>
-      {/* Default route redirects to login */}
-      <Route path="/" element={<Navigate to="/login" />} />
-      
-      {/* Public page */}
+      {/* Default: send root to /home */}
+      <Route path="/" element={<Navigate to="/home" replace />} />
+
+      {/* Public pages */}
       <Route path="/login" element={<Login />} />
       <Route path="/home" element={<Home />} />
 
-      {/* Protected dashboards */}
-      <Route
-        path="/patient"
-        element={
-          user && userType === "patient" ? (
-            <PatientDashboard />
-          ) : (
-            <Navigate to="/login" />
-          )
-        }
-      />
+      {/* Patients */}
+      <Route path="/patients" element={<PatientsIndexRedirect />} />
+      <Route path="/patients/:uid" element={<PatientRoute />} />
 
-      <Route
-        path="/provider"
-        element={
-          user && userType === "provider" ? (
-            <ProviderDashboard />
-          ) : (
-            <Navigate to="/login" />
-          )
-        }
-      />
+      {/* Provider (ungarded for now) */}
+      <Route path="/provider" element={<ProviderDashboard />} />
+      
+      <Route path="/force-password-reset" element={<ForcePasswordReset />} />
 
-      <Route path="/provider/prescription" element={<PrescriptionForm />} />
 
-      {/* Catch-all redirects */}
-      <Route path="*" element={<Navigate to="/" />} />
+      {/* Catch-all */}
+      <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
   );
 }

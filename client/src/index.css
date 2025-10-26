@@ -108,3 +108,12 @@ body {
   text-align: center;
   min-width: 280px;
 }
+/* --- ensure gradient shows, nothing covers it --- */
+html, body, #root { min-height: 100%; }             /* safety */
+body { 
+  background: linear-gradient(to bottom, #1a2b44, #5a7b99) !important;
+  background-attachment: fixed;                      /* nicer look */
+  overflow: auto;                                    /* avoid clipping */
+}
+#root, .home-container { background: transparent !important; }
+

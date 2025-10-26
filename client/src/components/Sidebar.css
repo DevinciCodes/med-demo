@@ -1,33 +1,46 @@
+/* src/components/Sidebar.css */
+
 .sidebar {
   width: 220px;
   height: 100vh;
   background-color: #2c3e50;
   color: white;
   display: flex;
-  flex-direction: column; /* stack children vertically */
+  flex-direction: column;
   padding: 1rem;
   position: fixed;
 }
 
 .sidebar h2 {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
 .sidebar-nav {
   display: flex;
-  flex-direction: column; /* vertical stack */
-  gap: 1rem;              /* spacing between links */
+  flex-direction: column;
+  gap: 0.4rem;                    /* tighter spacing between links */
 }
 
 .sidebar-nav a {
   color: white;
   text-decoration: none;
-  padding: 0.5rem;
-  border-radius: 5px;
-  display: block;          /* ensures each link takes its own line */
+  padding: 0.4rem 0.55rem;        /* reduced padding */
+  border-radius: 4px;            /* smaller radius for sharper look */
+  display: block;
+  font-size: 0.95rem;            /* slightly smaller text */
+  font-weight: 500;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
+/* Softer hover */
+.sidebar-nav a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Active only when actual tab/path matches */
 .sidebar-nav a.active {
-  background-color: #1abc9c;
-  font-weight: bold;
+  background-color: rgba(124, 164, 224, 0.25);
+  font-weight: 600;
 }

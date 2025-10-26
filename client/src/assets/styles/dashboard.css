@@ -1,0 +1,240 @@
+/* ===== Design tokens (light) ===== */
+:root {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --subtle: #94a3b8;
+  --border: #e5e7eb;
+
+  --brand: #4f46e5;          /* indigo-600 vibe */
+  --brand-pressed: #4338ca;
+  --ring: rgba(79, 70, 229, 0.35);
+
+  --danger-bg: #fee2e2;
+  --danger-fg: #b91c1c;
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, .06), 0 8px 24px rgba(15, 23, 42, .06);
+}
+
+/* ===== Optional Dark Theme (toggle via data-theme="dark" on a parent) ===== */
+[data-theme="dark"] {
+  --bg: #0b0f14;
+  --card: #10151c;
+  --text: #e5e7eb;
+  --muted: #9aa7b8;
+  --subtle: #7c8ba0;
+  --border: #1f2937;
+
+  --brand: #818cf8;
+  --brand-pressed: #6366f1;
+  --ring: rgba(129, 140, 248, 0.35);
+
+  --danger-bg: #3a1212;
+  --danger-fg: #fca5a5;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.35);
+}
+
+/* ===== Page base ===== */
+body {
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* If your main content lives next to a fixed 220px Sidebar, this keeps spacing tidy */
+.pd-main {
+  margin-left: 220px;     /* matches your <Sidebar /> width */
+  padding: 2rem;
+}
+@media (max-width: 900px) {
+  .pd-main {
+    margin-left: 0;       /* if you collapse the sidebar on mobile */
+    padding: 1.25rem;
+  }
+}
+
+/* Headings tidy margins (your h1/h3 in the page) */
+h1 { margin: 0 0 .75rem; letter-spacing: -0.01em; }
+h3 { margin: 0 0 .5rem; }
+
+/* ===== Re-usable cards (matches your inline style but centralized) ===== */
+.pd-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Section header row inside cards */
+.pd-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* ===== Buttons (you already use .login-btn) ===== */
+.login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .55rem .8rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+  font-size: .92rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .15s ease, transform .06s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.login-btn:hover {
+  background: color-mix(in oklab, var(--card), var(--text) 3%);
+}
+.login-btn:active { transform: translateY(1px); }
+.login-btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ring); }
+
+/* Primary variant (optional utility: add .is-primary) */
+.login-btn.is-primary {
+  background: var(--brand);
+  color: #fff;
+  border-color: transparent;
+}
+.login-btn.is-primary:hover { background: var(--brand-pressed); }
+
+/* ===== Inputs (you already use .input) ===== */
+.input {
+  width: 100%;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: .95rem;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.input::placeholder { color: var(--subtle); }
+.input:focus-visible {
+  outline: none;
+  border-color: color-mix(in oklab, var(--brand), #000 10%);
+  box-shadow: 0 0 0 4px var(--ring);
+}
+
+/* Native select height tweak to match .input */
+select.input { height: 38px; }
+
+/* ===== Stats row ===== */
+.pd-stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.pd-stat {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: .75rem 1rem;
+  min-width: 180px;
+  box-shadow: var(--shadow-sm);
+}
+.pd-stat .label { font-size: 12px; color: var(--subtle); text-transform: uppercase; letter-spacing: .06em; }
+.pd-stat .value { font-size: 24px; font-weight: 800; }
+
+/* ===== Tables (Meds list) ===== */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: 8px 4px;
+  border-bottom: 1px solid color-mix(in oklab, var(--border), transparent 30%);
+  font-size: .95rem;
+}
+.table th {
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+}
+
+/* ===== Alerts list ===== */
+.alerts {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: .6rem;
+}
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: .6rem .7rem;
+  background: var(--card);
+}
+.alert .text { margin: 0; font-size: .95rem; }
+
+/* ===== Chips (e.g., risky) ===== */
+.chip {
+  display: inline-block;
+  padding: .15rem .5rem;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 700;
+}
+.chip.danger { background: var(--danger-bg); color: var(--danger-fg); }
+
+/* ===== 7-day calendar scroller ===== */
+.week-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  overflow-x: auto;
+  padding-bottom: 4px; /* room for scrollbar */
+  scroll-behavior: smooth;
+}
+.day-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  min-height: 120px;
+  padding: 10px;
+  box-shadow: var(--shadow-sm);
+}
+.day-card.is-today { background: color-mix(in oklab, var(--card), var(--text) 5%); }
+.day-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.day-meta {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.day-list {
+  margin: 6px 0 0;
+  padding-left: 16px;
+  max-height: 160px;
+  overflow: auto;
+  font-size: 13px;
+}
+
+/* Scrollbar polish */
+.week-grid::-webkit-scrollbar,
+.day-list::-webkit-scrollbar { height: 8px; width: 8px; }
+.week-grid::-webkit-scrollbar-thumb,
+.day-list::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--text), transparent 80%);
+  border-radius: 8px;
+}
+.week-grid::-webkit-scrollbar-track,
+.day-list::-webkit-scrollbar-track { background: transparent; }
