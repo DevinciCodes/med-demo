@@ -1,4 +1,3 @@
-// src/pages/Patient_Dashboard.jsx
 import { useMemo, useState, useEffect } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { db } from "../firebase";
@@ -6,39 +5,45 @@ import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
 
-import "../assets/styles/dashboard.css";
-
-/* ---------- tiny UI helpers (keep your current look) ---------- */
-const card = {
+// =========== Shared look & feel (mirrors ProviderDashboard) ===========
+// Explicit color overrides so text doesn't turn white on light surfaces
+const container   = { maxWidth: 960, margin: "0 auto" };
+const pageWrap    = {
+  marginLeft: "220px",
+  padding: "2rem",
+  flex: 1,
+  background: "#f8fafc",
+  minHeight: "100vh",
+  color: "#0f172a",
+};
+const card        = {
+  background: "#ffffff",
   border: "1px solid #e5e7eb",
   borderRadius: 12,
-  background: "#fff",
-  padding: "1rem",
-  marginBottom: "1rem",
+  padding: 16,
+  color: "#0f172a",
 };
+const cardHeader  = { marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" };
+const h1          = { fontSize: 28, fontWeight: 700, margin: 0, letterSpacing: 0.2 };
+const h2          = { fontSize: 18, fontWeight: 600, margin: 0 };
+const muted       = { color: "#64748b" };
+const input       = {
+  padding: "10px 12px",
+  border: "1px solid #cbd5e1",
+  borderRadius: 8,
+  outline: "none",
+  fontSize: 14,
+  width: "100%",
+  background: "#fff",
+  color: "#0f172a",
+};
+const buttonBase  = { padding: "10px 14px", borderRadius: 10, border: "1px solid transparent", cursor: "pointer", fontWeight: 600 };
+const btnPrimary  = { ...buttonBase, background: "#4176c6ff", color: "#fff" };
+const btnGhost    = { ...buttonBase, background: "#f8fafc", color: "#0f172a", border: "1px solid #e5e7eb" };
+const statCard    = { ...card, marginBottom: 0, padding: "12px 16px", minWidth: 180 };
+const row2        = { display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" };
 
-function SectionCard({ title, right, children, maxWidth }) {
-  return (
-    <section style={{ ...card, ...(maxWidth ? { maxWidth } : {}) }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
-        {title ? <h3 style={{ margin: 0 }}>{title}</h3> : <span />}
-        {right}
-      </div>
-      <div style={{ marginTop: 12 }}>{children}</div>
-    </section>
-  );
-}
-
-function Stat({ label, value }) {
-  return (
-    <div style={{ ...card, marginBottom: 0, padding: "0.75rem 1rem", minWidth: 180 }}>
-      <div style={{ fontSize: 12, color: "#64748b" }}>{label}</div>
-      <div style={{ fontSize: 24, fontWeight: 700 }}>{value}</div>
-    </div>
-  );
-}
-
-/* ---------- simple interaction rules (extensible) ---------- */
+// =========== Demo interaction rules (unchanged) ===========
 const INTERACTIONS = {
   warfarin: ["ibuprofen", "naproxen", "aspirin", "amiodarone", "fluconazole"],
   ibuprofen: ["warfarin"],
@@ -46,7 +51,7 @@ const INTERACTIONS = {
   sildenafil: ["nitroglycerin", "isosorbide mononitrate", "isosorbide dinitrate"],
   metformin: ["cimetidine"],
 };
-/* Returns array of pairs that conflict: [{a,b}] */
+
 function findConflicts(meds) {
   const names = meds.map((m) => m.name.trim().toLowerCase());
   const conflicts = [];
@@ -63,14 +68,13 @@ function findConflicts(meds) {
   return conflicts;
 }
 
-/* ---------- 7-day schedule utility ---------- */
+// =========== 7-day schedule helpers (unchanged logic) ===========
 const NOW = new Date();
-function startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
-function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
-function formatDay(d) { return d.toLocaleDateString(undefined, { weekday: "short" }); }
-function formatMd(d) { return d.toLocaleDateString(undefined, { month: "short", day: "numeric" }); }
+const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const addDays    = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const formatDay  = (d) => d.toLocaleDateString(undefined, { weekday: "short" });
+const formatMd   = (d) => d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
-/* Given meds with freq + optional startDate/endDate, build plan for 7 days */
 function buildWeekPlan(meds, from = startOfDay(NOW)) {
   const days = [...Array(7)].map((_, i) => startOfDay(addDays(from, i)));
   const plan = days.map(() => []);
@@ -101,16 +105,38 @@ function buildWeekPlan(meds, from = startOfDay(NOW)) {
         plan[idx].push({ ...entry, note: "Noon" });
         plan[idx].push({ ...entry, note: "PM" });
       } else if (freq === "PRN") {
-        plan[idx].push(entry); // shown but not counted
+        plan[idx].push(entry);
       } else {
-        plan[idx].push(entry); // default
+        plan[idx].push(entry);
       }
     });
   });
   return { days, plan };
 }
 
-/* ---------- Page ---------- */
+// =========== Small reusable pieces (styled like provider) ===========
+function SectionCard({ title, right, children, maxWidth }) {
+  return (
+    <section style={{ ...card, ...(maxWidth ? { maxWidth } : {}) }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+        {title ? <h3 style={{ margin: 0 }}>{title}</h3> : <span />}
+        {right}
+      </div>
+      <div style={{ marginTop: 12 }}>{children}</div>
+    </section>
+  );
+}
+
+function Stat({ label, value }) {
+  return (
+    <div style={statCard}>
+      <div style={{ fontSize: 12, color: "#64748b" }}>{label}</div>
+      <div style={{ fontSize: 24, fontWeight: 700 }}>{value}</div>
+    </div>
+  );
+}
+
+// =========== Page ===========
 export default function PatientDashboard() {
   const { user, userType, loading, signOut } = useAuth();
 
@@ -138,29 +164,23 @@ export default function PatientDashboard() {
   const [params, setParams] = useSearchParams();
   const readTab = () => (params.get("tab") || "overview").toLowerCase();
   const [tab, setTab] = useState(readTab());
-
-  // Keep local state in sync if user clicks sidebar links
   useEffect(() => { setTab(readTab()); }, [params]);
 
   if (loading) return null;
   if (!user) return <Navigate to="/home" replace />;
   if (userType && userType !== "patient") return <Navigate to="/provider" replace />;
 
-  /* In-memory demo data; wire to your DB when ready */
+  // Demo meds (unchanged)
   const [meds, setMeds] = useState([
-    { id: "m1", name: "Warfarin", dose: "5 mg", freq: "QD", started: "2025-10-01" },
-    { id: "m2", name: "Ibuprofen", dose: "200 mg", freq: "PRN", started: "2025-10-18" },
-    { id: "m3", name: "Metformin", dose: "850 mg", freq: "BID", started: "2025-06-11" },
+    { id: "m1", name: "Warfarin",   dose: "5 mg",   freq: "QD",  started: "2025-10-01" },
+    { id: "m2", name: "Ibuprofen",  dose: "200 mg", freq: "PRN", started: "2025-10-18" },
+    { id: "m3", name: "Metformin",  dose: "850 mg", freq: "BID", started: "2025-06-11" },
   ]);
 
   const conflicts = useMemo(() => findConflicts(meds), [meds]);
-  const stats = useMemo(() => {
-    const active = meds.length;
-    const risky = conflicts.length;
-    return { active, risky };
-  }, [meds.length, conflicts.length]);
+  const stats = useMemo(() => ({ active: meds.length, risky: conflicts.length }), [meds.length, conflicts.length]);
 
-  /* ----- Components ----- */
+  // ---- Embedded subcomponents (styled like provider) ----
   const WeekCalendar = () => {
     const { days, plan } = useMemo(() => buildWeekPlan(meds), [meds]);
     const todayIdx = 0;
@@ -178,8 +198,9 @@ export default function PatientDashboard() {
                 border: "1px solid #e5e7eb",
                 borderRadius: 12,
                 background: isToday ? "#f1f5f9" : "#fff",
-                padding: "10px",
+                padding: 10,
                 minHeight: 120,
+                color: "#0f172a",
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -204,6 +225,28 @@ export default function PatientDashboard() {
     );
   };
 
+  const AlertsSection = () => (
+    <SectionCard title="Interaction Alerts">
+      {conflicts.length === 0 ? (
+        <div style={{ color: "#64748b" }}>No known interactions in this list.</div>
+      ) : (
+        <ul style={{ margin: 0, paddingLeft: 18 }}>
+          {conflicts.map((p, i) => (
+            <li key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>⚠️</span>
+              <div>
+                <strong>{p.a}</strong> may interact with <strong>{p.b}</strong>.
+                <div style={{ fontSize: 12, color: "#64748b" }}>
+                  (Demo rules) Advise patient to consult provider/pharmacist.
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </SectionCard>
+  );
+
   const MedsSection = () => {
     const [filter, setFilter] = useState("");
     const [draft, setDraft] = useState({ name: "", dose: "", freq: "QD" });
@@ -211,26 +254,25 @@ export default function PatientDashboard() {
 
     return (
       <>
-        {/* ✨ Add medication FIRST */}
-        <SectionCard title="Add medication" maxWidth={560}>
-          <div style={{ display: "grid", gap: 8 }}>
+        {/* Add Medication */}
+        <div style={{ ...card, marginBottom: 16 }}>
+          <div style={cardHeader}><h2 style={h2}>Add Medication</h2></div>
+          <div style={{ display: "grid", gap: 8, maxWidth: 560 }}>
             <input
-              className="input"
+              style={input}
               placeholder="Medication name"
               value={draft.name}
               onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
             />
             <div style={{ display: "flex", gap: 8 }}>
               <input
-                className="input"
-                style={{ flex: 1 }}
+                style={{ ...input, flex: 1 }}
                 placeholder="Dose (e.g., 10 mg)"
                 value={draft.dose}
                 onChange={(e) => setDraft((d) => ({ ...d, dose: e.target.value }))}
               />
               <select
-                className="input"
-                style={{ flex: 1, height: 38 }}
+                style={{ ...input, flex: 1, height: 42 }}
                 value={draft.freq}
                 onChange={(e) => setDraft((d) => ({ ...d, freq: e.target.value }))}
               >
@@ -239,41 +281,46 @@ export default function PatientDashboard() {
                 ))}
               </select>
             </div>
-            <button
-              className="login-btn"
-              onClick={() => {
-                if (!draft.name.trim()) return;
-                setMeds((xs) => [
-                  ...xs,
-                  {
-                    id: crypto.randomUUID(),
-                    name: draft.name.trim(),
-                    dose: draft.dose,
-                    freq: draft.freq,
-                    started: new Date().toISOString().slice(0, 10),
-                  },
-                ]);
-                setDraft({ name: "", dose: "", freq: "QD" });
-              }}
-            >
-              Add
-            </button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                className="login-btn"
+                style={btnPrimary}
+                onClick={() => {
+                  if (!draft.name.trim()) return;
+                  setMeds((xs) => [
+                    ...xs,
+                    {
+                      id: crypto.randomUUID(),
+                      name: draft.name.trim(),
+                      dose: draft.dose.trim(),
+                      freq: draft.freq,
+                      started: new Date().toISOString().slice(0, 10),
+                    },
+                  ]);
+                  setDraft({ name: "", dose: "", freq: "QD" });
+                }}
+              >
+                Add
+              </button>
+              <button className="login-btn" style={btnGhost} onClick={() => setDraft({ name: "", dose: "", freq: "QD" })}>
+                Clear
+              </button>
+            </div>
           </div>
-        </SectionCard>
+        </div>
 
-        {/* Then the list */}
-        <SectionCard
-          title="Medications"
-          right={
+        {/* Medications List */}
+        <div style={{ ...card, marginBottom: 16 }}>
+          <div style={cardHeader}>
+            <h2 style={h2}>Medications</h2>
             <input
               placeholder="Filter by name…"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="input"
-              style={{ width: 220, padding: "0.5rem", borderRadius: 10, border: "1px solid #cbd5e1" }}
+              style={{ ...input, width: 240 }}
             />
-          }
-        >
+          </div>
+
           {filtered.length ? (
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
@@ -296,6 +343,7 @@ export default function PatientDashboard() {
                     <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9", textAlign: "right" }}>
                       <button
                         className="login-btn"
+                        style={btnGhost}
                         onClick={() => setMeds((xs) => xs.filter((x) => x.id !== m.id))}
                       >
                         Remove
@@ -308,69 +356,58 @@ export default function PatientDashboard() {
           ) : (
             <div style={{ color: "#64748b" }}>No medications.</div>
           )}
-        </SectionCard>
+        </div>
       </>
     );
   };
 
-  const AlertsSection = () => (
-    <SectionCard title="Interaction alerts">
-      {conflicts.length === 0 ? (
-        <div style={{ color: "#64748b" }}>No known interactions in this list.</div>
-      ) : (
-        <ul style={{ margin: 0, paddingLeft: 18 }}>
-          {conflicts.map((p, i) => (
-            <li key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 6 }}>
-              <span style={{ fontSize: 18 }}>⚠️</span>
-              <div>
-                <strong>{p.a}</strong> may interact with <strong>{p.b}</strong>.
-                <div style={{ fontSize: 12, color: "#64748b" }}>
-                  (Demo rules) Advise patient to consult provider/pharmacist.
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </SectionCard>
-  );
-
   const Overview = () => (
     <>
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
-        <Stat label="Active Meds" value={stats.active} />
-        <Stat label="Interaction Alerts" value={stats.risky} />
+      <div style={{ ...card, marginBottom: 16 }}>
+        <div style={cardHeader}>
+          <div>
+            <h1 style={h1}>Patient Dashboard</h1>
+            <div style={{ ...muted, fontSize: 14 }}>Your weekly plan, meds, and safety alerts.</div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <Stat label="Active Meds" value={stats.active} />
+          <Stat label="Interaction Alerts" value={stats.risky} />
+        </div>
       </div>
 
-      <SectionCard title="This week">
+      <div style={{ ...card, marginBottom: 16 }}>
+        <div style={cardHeader}><h2 style={h2}>This Week</h2></div>
         <WeekCalendar />
-      </SectionCard>
+      </div>
 
       <AlertsSection />
     </>
   );
 
   const Settings = () => (
-    <SectionCard title="Settings">
+    <div style={{ ...card, marginBottom: 16 }}>
+      <div style={cardHeader}><h2 style={h2}>Settings</h2></div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button className="login-btn">Change Password</button>
-        <button className="login-btn" onClick={signOut}>Logout</button>
+        <button className="login-btn" style={btnGhost}>Change Password</button>
+        <button className="login-btn" style={btnPrimary} onClick={signOut}>Logout</button>
       </div>
-    </SectionCard>
+    </div>
   );
 
-  /* ---------- Layout ---------- */
+  // =========== Layout ===========
   return (
     <div style={{ display: "flex" }}>
       <Sidebar />
-      <div style={{ marginLeft: 220, padding: "2rem", flex: 1 }}>
-        <h1 style={{ marginTop: 0 }}>Patient Dashboard</h1>
-
-        {/* Tabs removed — sidebar controls the tab via ?tab=... */}
-        {tab === "overview" && <Overview />}
-        {tab === "meds" && <MedsSection />}
-        {tab === "alerts" && <AlertsSection />}
-        {tab === "settings" && <Settings />}
+      <div style={pageWrap}>
+        <div style={container}>
+          {/* Tabs are driven by ?tab=... from Sidebar; header inside each section */}
+          {tab === "overview" && <Overview />}
+          {tab === "meds" && <MedsSection />}
+          {tab === "alerts" && <AlertsSection />}
+          {tab === "settings" && <Settings />}
+        </div>
       </div>
     </div>
   );

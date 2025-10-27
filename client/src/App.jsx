@@ -65,6 +65,7 @@ export default function App() {
       <Route path="/provider" element={<ProviderDashboard />} />
       
       <Route path="/force-password-reset" element={<ForcePasswordReset />} />
+   
 
 
       {/* Catch-all */}
