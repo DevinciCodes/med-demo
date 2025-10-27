@@ -1,3 +1,4 @@
+// src/pages/ProviderDashboard.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
@@ -12,21 +13,23 @@ const mockPatients = [
 ];
 
 // ===== Small UI helpers (inline styles) =====
-const container = { maxWidth: 960, margin: "0 auto" };
-const card = { background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 12, padding: 16 };
-const cardHeader = { marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" };
-const h1 = { fontSize: 28, fontWeight: 700, margin: 0, letterSpacing: 0.2 };
-const h2 = { fontSize: 18, fontWeight: 600, margin: 0 };
-const muted = { color: "#64748b" };
-const input = { padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: 8, outline: "none", fontSize: 14, width: "100%" };
-const row2 = { display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" };
-const row3 = { display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr 1fr" };
-const buttonBase = { padding: "10px 14px", borderRadius: 10, border: "1px solid transparent", cursor: "pointer", fontWeight: 600 };
-const btnPrimary = { ...buttonBase, background: "#4f46e5", color: "#fff" };
-const btnGhost = { ...buttonBase, background: "#f8fafc", color: "#0f172a", border: "1px solid #e5e7eb" };
-const bannerOk = { margin: "12px 0", padding: 12, borderRadius: 10, border: "1px solid #a7f3d0", background: "#ecfdf5", color: "#065f46" };
-const bannerErr = { margin: "12px 0", padding: 12, borderRadius: 10, border: "1px solid #fecaca", background: "#fef2f2", color: "#991b1b" };
-//const badge = { padding: "2px 8px", borderRadius: 999, background: "#eef2ff", color: "#3730a3", fontSize: 12, fontWeight: 600 };
+const container   = { maxWidth: 960, margin: "0 auto" };
+const pageWrap    = { marginLeft: "220px", padding: "2rem", flex: 1, background: "#f8fafc", minHeight: "100vh", color: "#0f172a" };
+const card        = { background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 12, padding: 16, color: "#0f172a" };
+const cardHeader  = { marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" };
+const h1          = { fontSize: 28, fontWeight: 700, margin: 0, letterSpacing: 0.2, color: "#0f172a" };
+const h2          = { fontSize: 18, fontWeight: 600, margin: 0, color: "#0f172a" };
+const muted       = { color: "#64748b" };
+const labelStyle  = { display: "block", fontSize: 12, color: "#475569", marginBottom: 6 };
+const input       = { padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: 8, outline: "none", fontSize: 14, width: "100%", background: "#fff", color: "#0f172a" };
+const row2        = { display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" };
+const row3        = { display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr 1fr" };
+const buttonBase  = { padding: "10px 14px", borderRadius: 10, border: "1px solid transparent", cursor: "pointer", fontWeight: 600 };
+const btnPrimary  = { ...buttonBase, background: "#4176c6", color: "#fff" }; // solid hex
+const btnGhost    = { ...buttonBase, background: "#f8fafc", color: "#0f172a", border: "1px solid #e5e7eb" };
+const bannerOk    = { margin: "12px 0", padding: 12, borderRadius: 10, border: "1px solid #a7f3d0", background: "#ecfdf5", color: "#065f46" };
+const bannerErr   = { margin: "12px 0", padding: 12, borderRadius: 10, border: "1px solid #fecaca", background: "#fef2f2", color: "#991b1b" };
+// const badge    = { padding: "2px 8px", borderRadius: 999, background: "#eef2ff", color: "#3730a3", fontSize: 12, fontWeight: 600 };
 
 function genTempPassword() {
   const base = Math.random().toString(36).slice(-6);
@@ -172,7 +175,7 @@ export default function ProviderDashboard() {
   return (
     <div style={{ display: "flex" }}>
       <Sidebar />
-      <div style={{ marginLeft: "220px", padding: "2rem", flex: 1, background: "#f8fafc", minHeight: "100vh" }}>
+      <div style={pageWrap}>
         <div style={container}>
           {/* Header */}
           <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
@@ -194,8 +197,8 @@ export default function ProviderDashboard() {
                 <h2 style={h2}>Temporary Patient Portal Credentials (demo)</h2>
               </div>
               <div style={{ lineHeight: 1.9 }}>
-                <div>Email: <code>{tempCreds.email}</code></div>
-                <div>Temp Password: <code>{tempCreds.tempPassword}</code></div>
+                <div>Email: <code style={{ color: "#0f172a" }}>{tempCreds.email}</code></div>
+                <div>Temp Password: <code style={{ color: "#0f172a" }}>{tempCreds.tempPassword}</code></div>
                 <div style={{ fontSize: 12, color: "#64748b" }}>
                   For a real portal, create the Auth user via a backend with Firebase Admin SDK and force a password reset on first login.
                 </div>
@@ -215,40 +218,40 @@ export default function ProviderDashboard() {
               <form onSubmit={handleCreatePatient} style={{ display: "grid", gap: 16 }}>
                 <div style={row2}>
                   <div>
-                    <label style={{ display: "block", fontSize: 12, color: "#475569", marginBottom: 6 }}>First Name *</label>
+                    <label style={labelStyle}>First Name *</label>
                     <input style={input} value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Jane" />
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: 12, color: "#475569", marginBottom: 6 }}>Last Name *</label>
+                    <label style={labelStyle}>Last Name *</label>
                     <input style={input} value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Patient" />
                   </div>
                 </div>
 
                 <div style={row2}>
                   <div>
-                    <label style={{ display: "block", fontSize: 12, color: "#475569", marginBottom: 6 }}>Email (login) *</label>
+                    <label style={labelStyle}>Email (login) *</label>
                     <input style={input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane.patient@example.com" />
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: 12, color: "#475569", marginBottom: 6 }}>DOB</label>
+                    <label style={labelStyle}>DOB</label>
                     <input style={input} type="text" value={dob} onChange={(e) => setDob(e.target.value)} placeholder="YYYY-MM-DD" />
                   </div>
                 </div>
 
                 <div style={row2}>
                   <div>
-                    <label style={{ display: "block", fontSize: 12, color: "#475569", marginBottom: 6 }}>Allergies</label>
+                    <label style={labelStyle}>Allergies</label>
                     <input style={input} value={allergies} onChange={(e) => setAllergies(e.target.value)} placeholder="penicillin, peanuts" />
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: 12, color: "#475569", marginBottom: 6 }}>Contact (phone or address)</label>
+                    <label style={labelStyle}>Contact (phone or address)</label>
                     <input style={input} value={contact} onChange={(e) => setContact(e.target.value)} placeholder="(555) 555-5555 • 123 Main St" />
                   </div>
                 </div>
 
                 {/* Initial Medications */}
                 <div style={{ marginTop: 8 }}>
-                  <div style={{ marginBottom: 8, fontWeight: 600 }}>Initial Medications (optional)</div>
+                  <div style={{ marginBottom: 8, fontWeight: 600, color: "#0f172a" }}>Initial Medications (optional)</div>
                   {meds.map((m, i) => (
                     <div key={i} style={{ ...row3, alignItems: "center", marginBottom: 8 }}>
                       <input style={input} placeholder="Name (e.g., Lisinopril)" value={m.name} onChange={(e) => updateMed(i, "name", e.target.value)} />
@@ -272,19 +275,19 @@ export default function ProviderDashboard() {
 
                 {/* Schedule */}
                 <div style={{ marginTop: 8 }}>
-                  <div style={{ marginBottom: 8, fontWeight: 600 }}>Schedule (optional)</div>
+                  <div style={{ marginBottom: 8, fontWeight: 600, color: "#0f172a" }}>Schedule (optional)</div>
                   <div style={row2}>
                     <div>
-                      <label style={{ display: "block", fontSize: 12, color: "#475569", marginBottom: 6 }}>Next Visit</label>
+                      <label style={labelStyle}>Next Visit</label>
                       <input style={input} type="datetime-local" value={nextVisit} onChange={(e) => setNextVisit(e.target.value)} />
                     </div>
                     <div>
-                      <label style={{ display: "block", fontSize: 12, color: "#475569", marginBottom: 6 }}>Location</label>
+                      <label style={labelStyle}>Location</label>
                       <input style={input} value={visitLocation} onChange={(e) => setVisitLocation(e.target.value)} placeholder="Clinic A, Room 4" />
                     </div>
                   </div>
                   <div style={{ marginTop: 12 }}>
-                    <label style={{ display: "block", fontSize: 12, color: "#475569", marginBottom: 6 }}>Reason</label>
+                    <label style={labelStyle}>Reason</label>
                     <input style={input} value={visitReason} onChange={(e) => setVisitReason(e.target.value)} placeholder="Follow-up BP check" />
                   </div>
                 </div>
@@ -321,7 +324,7 @@ export default function ProviderDashboard() {
                 {results.map((p) => (
                   <li key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderTop: "1px solid #f1f5f9" }}>
                     <div>
-                      <div style={{ fontWeight: 600 }}>{p.name}</div>
+                      <div style={{ fontWeight: 600, color: "#0f172a" }}>{p.name}</div>
                       <div style={{ fontSize: 12, color: "#64748b" }}>DOB: {p.dob || "—"}</div>
                     </div>
                     <button className="login-btn" style={btnGhost} onClick={() => setSelectedPatient(p)}>
@@ -335,7 +338,7 @@ export default function ProviderDashboard() {
             )}
           </div>
 
-          {/* Selected Patient Profile (unchanged fields, improved spacing) */}
+          {/* Selected Patient Profile */}
           {selectedPatient && (
             <div style={{ ...card, marginBottom: 24 }}>
               <div style={cardHeader}>
@@ -343,12 +346,12 @@ export default function ProviderDashboard() {
               </div>
 
               <div style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" }}>
-                <div><strong>Name:</strong> {selectedPatient.name}</div>
-                <div><strong>Email:</strong> {selectedPatient.email}</div>
-                <div><strong>Date of Birth:</strong> {selectedPatient.dob}</div>
-                <div><strong>Phone Number:</strong> {selectedPatient.phone}</div>
+                <div><strong style={{ color: "#0f172a" }}>Name:</strong> {selectedPatient.name}</div>
+                <div><strong style={{ color: "#0f172a" }}>Email:</strong> {selectedPatient.email}</div>
+                <div><strong style={{ color: "#0f172a" }}>Date of Birth:</strong> {selectedPatient.dob}</div>
+                <div><strong style={{ color: "#0f172a" }}>Phone Number:</strong> {selectedPatient.phone}</div>
                 <div style={{ gridColumn: "1 / -1" }}>
-                  <strong>Address:</strong> {selectedPatient.addr}
+                  <strong style={{ color: "#0f172a" }}>Address:</strong> {selectedPatient.addr}
                 </div>
               </div>
 
