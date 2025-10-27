@@ -1,6 +1,8 @@
 // src/pages/Patient_Dashboard.jsx
 import { useMemo, useState, useEffect } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
+import { db } from "../firebase";
+import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
 
@@ -111,6 +113,26 @@ function buildWeekPlan(meds, from = startOfDay(NOW)) {
 /* ---------- Page ---------- */
 export default function PatientDashboard() {
   const { user, userType, loading, signOut } = useAuth();
+
+  const [patientData, setPatientData] = useState(null);
+
+  useEffect(() => {
+    async function loadPatientData() {
+      if (!user) return;
+      try {
+        const ref = doc(db, "patients", user.uid);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          setPatientData(snap.data());
+        } else {
+          console.log("no patient record found");
+        }
+      } catch (err) {
+        console.error("error loading patient data:", err);
+      }
+    }
+    loadPatientData();
+  }, [user]);
 
   // 🔁 Use ?tab=... from the URL (sidebar controls this)
   const [params, setParams] = useSearchParams();
