@@ -44,3 +44,18 @@
   background-color: rgba(124, 164, 224, 0.25);
   font-weight: 600;
 }
+
+/* 👇 this pushes the logout button to the bottom */
+.logout-btn {
+  margin-top: auto;
+  background-color: #e74c3c;
+  border: none;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background-color: #c0392b;
+}

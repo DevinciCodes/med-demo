@@ -6,9 +6,41 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 // ===== Your original mock data (unchanged for search) =====
 const mockPatients = [
-  { id: "p1", name: "John Doe", email: "john.doe@example.com", dob: "1990-01-15", phone: "111-111-1111", addr:"3920 Lakeview Drive, Austin, TX 78745" },
-  { id: "p2", name: "Jane Smith", email: "jane.smith@example.com", dob: "1985-07-22", phone: "098-765-4321", addr:"5871 Maplewood Avenue, Columbus, OH 43214" },
-  { id: "p3", name: "Alice Johnson", email: "alice.johnson@example.com", dob: "2000-03-10", phone: "123-456-7890", addr:"1248 Evergreen Terrace, Springfield, IL 62704" },
+  { 
+    id: "p1", 
+    name: "John Doe", 
+    gender: "Male", 
+    email: "john.doe@example.com", 
+    dob: "1990-01-15", 
+    phone: "111-111-1111", 
+    addr: "3920 Lakeview Drive, Austin, TX 78745", 
+    allergy: "None" 
+  },
+  { 
+    id: "p2", 
+    name: "Jane Smith", 
+    gender: "Female", 
+    email: "jane.smith@example.com", 
+    dob: "1985-07-22", 
+    phone: "098-765-4321", 
+    addr: "5871 Maplewood Avenue, Columbus, OH 43214", 
+    allergy: [
+      { allergen: "Codeine", reaction: "Hives" },
+      { allergen: "Latex", reaction: "Skin Rash" }
+    ]
+  },
+  { 
+    id: "p3", 
+    name: "Alice Johnson", 
+    gender: "Female", 
+    email: "alice.johnson@example.com", 
+    dob: "2000-03-10", 
+    phone: "123-456-7890", 
+    addr: "1248 Evergreen Terrace, Springfield, IL 62704", 
+    allergy: [
+      { allergen: "Penicillin", reaction: "Anaphylaxis" }
+    ]
+  },
 ];
 
 // ===== Small UI helpers (inline styles) =====
@@ -37,6 +69,9 @@ export default function ProviderDashboard() {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [showAllergies, setShowAllergies] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedPatient, setEditedPatient] = useState(null);
   const navigate = useNavigate();
 
   // ===== Create Patient (collapsible) =====
