@@ -172,9 +172,9 @@ export default function PatientDashboard() {
 
   // Demo meds (unchanged)
   const [meds, setMeds] = useState([
-    { id: "m1", name: "Warfarin",   dose: "5 mg",   freq: "QD",  started: "2025-10-01" },
-    { id: "m2", name: "Ibuprofen",  dose: "200 mg", freq: "PRN", started: "2025-10-18" },
-    { id: "m3", name: "Metformin",  dose: "850 mg", freq: "BID", started: "2025-06-11" },
+    { id: "m1", name: "Warfarin",   dose: "5 mg",   freq: "QD", eng: "Once a day", started: "2025-10-01" },
+    { id: "m2", name: "Ibuprofen",  dose: "200 mg", freq: "PRN", eng: "As needed", started: "2025-10-18" },
+    { id: "m3", name: "Metformin",  dose: "850 mg", freq: "BID", eng: "Twice a day", started: "2025-06-11" },
   ]);
 
   const conflicts = useMemo(() => findConflicts(meds), [meds]);
@@ -249,7 +249,7 @@ export default function PatientDashboard() {
 
   const MedsSection = () => {
     const [filter, setFilter] = useState("");
-    const [draft, setDraft] = useState({ name: "", dose: "", freq: "QD" });
+    const [draft, setDraft] = useState({ name: "", dose: "", freq: "QD", eng: "Once a day" });
     const filtered = meds.filter((m) => m.name.toLowerCase().includes(filter.toLowerCase()));
 
     return (
@@ -267,16 +267,19 @@ export default function PatientDashboard() {
             <div style={{ display: "flex", gap: 8 }}>
               <input
                 style={{ ...input, flex: 1 }}
-                placeholder="Dose (e.g., 10 mg)"
+                placeholder="Dose (e.g., 10 mg, 1 tablet, 1 injection)"
                 value={draft.dose}
                 onChange={(e) => setDraft((d) => ({ ...d, dose: e.target.value }))}
               />
               <select
                 style={{ ...input, flex: 1, height: 42 }}
-                value={draft.freq}
-                onChange={(e) => setDraft((d) => ({ ...d, freq: e.target.value }))}
+                value={draft.eng}
+                onChange={(e) => setDraft((d) => ({ ...d, eng: e.target.value }))}
               >
-                {["QD", "BID", "TID", "QOD", "AM", "PM", "HS", "PRN"].map((f) => (
+                {["Once a day", "Twice a day", "Three times a day", "Four times a day", "Every other day"
+                , "Once a week", "Twice a week", "Every 2 Hours", "Every 4 Hours", "Every 6 Hours"
+                , "Every 8 Hours", "Every 12 Hours", "Every 2-4 Hours", "Every 4-6 Hours", "Before meals"
+                , "Morning", "Nighttime", "At Bedtime", "As Needed"].map((f) => (
                   <option key={f} value={f}>{f}</option>
                 ))}
               </select>
@@ -293,16 +296,16 @@ export default function PatientDashboard() {
                       id: crypto.randomUUID(),
                       name: draft.name.trim(),
                       dose: draft.dose.trim(),
-                      freq: draft.freq,
+                      eng: draft.eng,
                       started: new Date().toISOString().slice(0, 10),
                     },
                   ]);
-                  setDraft({ name: "", dose: "", freq: "QD" });
+                  setDraft({ name: "", dose: "", eng: "Once a day" });
                 }}
               >
                 Add
               </button>
-              <button className="login-btn" style={btnGhost} onClick={() => setDraft({ name: "", dose: "", freq: "QD" })}>
+              <button className="login-btn" style={btnGhost} onClick={() => setDraft({ name: "", dose: "", freq: "QD", eng: "Once a day" })}>
                 Clear
               </button>
             </div>
@@ -325,7 +328,7 @@ export default function PatientDashboard() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ textAlign: "left" }}>
-                  {["Name", "Dose", "Freq", "Started"].map((h) => (
+                  {["Name", "Dose", "Frequency", "Started"].map((h) => (
                     <th key={h} style={{ borderBottom: "1px solid #e5e7eb", padding: "8px 4px", fontWeight: 600 }}>
                       {h}
                     </th>
@@ -338,7 +341,7 @@ export default function PatientDashboard() {
                   <tr key={m.id}>
                     <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9" }}>{m.name}</td>
                     <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9" }}>{m.dose}</td>
-                    <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9" }}>{m.freq}</td>
+                    <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9" }}>{m.eng}</td>
                     <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9" }}>{m.started || "-"}</td>
                     <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9", textAlign: "right" }}>
                       <button

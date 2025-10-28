@@ -7,9 +7,9 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 // ===== Your original mock data (unchanged for search) =====
 const mockPatients = [
-  { id: "p1", name: "John Doe", email: "john.doe@example.com", dob: "1990-01-15", phone: "111-111-1111", addr:"3920 Lakeview Drive, Austin, TX 78745" },
-  { id: "p2", name: "Jane Smith", email: "jane.smith@example.com", dob: "1985-07-22", phone: "098-765-4321", addr:"5871 Maplewood Avenue, Columbus, OH 43214" },
-  { id: "p3", name: "Alice Johnson", email: "alice.johnson@example.com", dob: "2000-03-10", phone: "123-456-7890", addr:"1248 Evergreen Terrace, Springfield, IL 62704" },
+  { id: "p1", name: "John Doe", email: "john.doe@example.com", dob: "01-15-1990", phone: "111-111-1111", addr:"3920 Lakeview Drive, Austin, TX 78745" },
+  { id: "p2", name: "Jane Smith", email: "jane.smith@example.com", dob: "07-22-1985", phone: "098-765-4321", addr:"5871 Maplewood Avenue, Columbus, OH 43214" },
+  { id: "p3", name: "Alice Johnson", email: "alice.johnson@example.com", dob: "03-10-2000", phone: "123-456-7890", addr:"1248 Evergreen Terrace, Springfield, IL 62704" },
 ];
 
 // ===== Small UI helpers (inline styles) =====
@@ -98,7 +98,7 @@ export default function ProviderDashboard() {
     setMsg(""); setErr(""); setTempCreds(null);
 
     if (!firstName || !lastName || !email) {
-      setErr("First name, last name, and email are required.");
+      setErr("First name, Last name, DOB, and email are required.");
       return;
     }
 
@@ -233,7 +233,7 @@ export default function ProviderDashboard() {
                     <input style={input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane.patient@example.com" />
                   </div>
                   <div>
-                    <label style={labelStyle}>DOB</label>
+                    <label style={labelStyle}>DOB *</label>
                     <input style={input} type="text" value={dob} onChange={(e) => setDob(e.target.value)} placeholder="YYYY-MM-DD" />
                   </div>
                 </div>
