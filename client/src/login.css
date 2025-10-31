@@ -1,0 +1,263 @@
+/* ---------- general reset ---------- */
+* {
+  outline: none;
+  box-sizing: border-box;
+}
+
+.home-title {
+  font-size: 4rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(to bottom, #0e1d35, #14294a);
+  font-family: "Inter", system-ui, sans-serif;
+  overflow: hidden;
+}
+
+/* ---------- header / navbar ---------- */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-height: 280px;
+  background: linear-gradient(
+    to bottom,
+    rgba(14, 29, 53, 1),
+    rgba(14, 29, 53, 0.7),
+    rgba(14, 29, 53, 0)
+  );
+  text-align: center;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding-top: 50px;
+}
+
+/* ---------- main content ---------- */
+.home-content {
+  position: absolute;
+  top: 240px;
+  left: 0;
+  width: 100%;
+  height: calc(100vh - 240px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 2rem 1rem 4rem;
+  gap: 1.5rem;
+}
+
+/* ---------- buttons ---------- */
+.button-group {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.login-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  border-radius: 6px;
+  font-weight: 600;
+  width: 170px;
+  height: 35px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  align-self: center;
+  margin-top: 20px;
+}
+
+.login-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px);
+}
+
+/* ---------- form structure ---------- */
+.login-form {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2rem;
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+  width: 700px;
+  max-width: 90vw;
+  margin: 0 auto;
+  color: #fff;
+}
+
+.form-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #f5f9ff;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  text-transform: none;
+  letter-spacing: 0.3px;
+}
+
+.form-body {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* ---------- form sections ---------- */
+.form-section {
+  margin-bottom: 1.25rem;
+}
+
+.form-section label {
+  display: block;
+  color: #cfd9e9;
+  text-align: left;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.form-section input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+/* ---------- divider ---------- */
+.divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  margin: 1.25rem 0;
+}
+
+/* ---------- registration fields ---------- */
+.register-fields {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  text-align: left;
+}
+
+.form-heading {
+  color: #e8efff;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 1.5rem; /* space below headings */
+}
+
+/* ---------- form rows and groups ---------- */
+.form-row {
+  display: flex;
+  gap: 1rem; /* space between fields in a row */
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0; /* remove bottom margin since row handles it */
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 200px;
+  margin-bottom: 1.25rem; /* space between form fields */
+}
+
+.form-group label {
+  display: block;
+  color: #cfd9e9;
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem; /* consistent space between label and input */
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.875rem 1rem; /* consistent internal padding */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ---------- input fields ---------- */
+input {
+  padding: 0.875rem 1rem; /* consistent internal padding */
+}
+
+/* style the date input */
+input[type="date"] {
+  color: #e8f0ff; /* make the text visible */
+  font-size: 1rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* style the date picker icon/calendar icon */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1); /* makes the calendar icon white/light */
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* remove the default date format display when empty */
+input[type="date"]:invalid {
+  color: rgba(232, 240, 255, 0.5);
+}
+
+/* ---------- toggle link ---------- */
+.toggle-link {
+  text-align: center;
+  margin-top: 1rem;
+  color: #c9daf8;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.toggle-link:hover {
+  color: #e8f0ff;
+}
+
+/* ---------- messages ---------- */
+.message {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #a8d5ba;
+}
+
+.error-msg {
+  color: rgb(180, 56, 56);
+}
