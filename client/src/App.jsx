@@ -4,9 +4,13 @@ import { useAuth } from "./context/AuthContext";
 import PatientDashboard from "./pages/Patient_Dashboard";
 import ProviderDashboard from "./pages/Provider_Dashboard";
 import ForcePasswordReset from "./pages/ForcePasswordReset";
+import Admin from "./pages/Admin";
+import ProviderRegister from "./pages/ProviderRegister";
 
 import Login from "./pages/Login";
 import Home from "./pages/Home";
+import AdminLogin from "./pages/AdminLogin";
+import RequireAdmin from "./components/RequireAdmin";
 
 function LoadingScreen() {
   return <div style={{ padding: "2rem" }}>Loading…</div>;
@@ -67,7 +71,16 @@ export default function App() {
       <Route path="/force-password-reset" element={<ForcePasswordReset />} />
    
 
-
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route
+        path="/admin"
+        element={
+          <RequireAdmin>
+            <Admin />
+          </RequireAdmin>
+        }
+      />
+      <Route path="/provider/register" element={<ProviderRegister />} />
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>

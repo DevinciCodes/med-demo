@@ -1,30 +1,29 @@
-// Home.jsx
+// src/pages/Home.jsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginUser, registerUser, auth } from "../firebase";
+import { loginUser, auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
+import { doc, getDoc } from "firebase/firestore";
 import "../home.css";
 
 export default function Home() {
   const navigate = useNavigate();
-  const { mock, loginMock, getMockUid } = useAuth(); // 👈 add getMockUid
-  const [role, setRole] = useState(null);
+  const { mock, loginMock, getMockUid } = useAuth();
+
+  const [role, setRole] = useState(null);            // "patient" | "provider" | null
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isRegister, setIsRegister] = useState(false);
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState("idle");
 
-  // Navigate only from here when real Firebase changes.
+  // Optional: keep signed-in users where they belong (very conservative)
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
-      if (!mock && u) {
-        navigate(`/patients/${u.uid}`, { replace: true });
-      }
+      // no auto-nav here so we don't skip mustReset checks
     });
     return () => unsub();
-  }, [navigate, mock]);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,34 +33,42 @@ export default function Home() {
     try {
       const em = email.trim();
 
+      // ---- MOCK MODE (your dev helper) ----
       if (mock) {
-        // 1) update auth state first (context + localStorage)
         loginMock(em, role || "patient");
-        // 2) read back the uid the same way your guard/context will
-        const uid = getMockUid?.() ||
+        const uid =
+          getMockUid?.() ||
           (() => {
             try { return JSON.parse(localStorage.getItem("mockUser"))?.uid; } catch { return null; }
           })();
         if (!uid) throw new Error("Mock login failed to create uid.");
-
-        // 3) now navigate once
-        navigate(`/patients/${uid}`, { replace: true });
+        if (role === "provider") navigate("/provider", { replace: true });
+        else navigate(`/patients/${uid}`, { replace: true });
         return;
       }
 
-      // REAL Firebase auth:
-      if (isRegister) {
-        await registerUser(em, password);
-        const u = auth.currentUser;
-        if (!u) throw new Error("No Firebase user after register.");
-        setMessage("Account created successfully!");
-        navigate(`/patients/${u.uid}`, { replace: true });
+      // ---- REAL LOGIN ONLY (no self-register here) ----
+      if (!role) throw new Error("Choose Patient or Provider first.");
+      await loginUser(em, password);
+      const u = auth.currentUser;
+      if (!u) throw new Error("No Firebase user after login.");
+
+      if (role === "patient") {
+        // Enforce mustReset from Firestore: Patients/{uid}
+        const snap = await getDoc(doc(db, "Patients", u.uid));
+        const mustReset = snap.exists() ? snap.data()?.mustReset === true : false;
+
+        if (mustReset) {
+          setMessage("Please set a new password.");
+          navigate("/force-password-reset", { replace: true });
+        } else {
+          setMessage("Login successful!");
+          navigate(`/patients/${u.uid}`, { replace: true });
+        }
       } else {
-        await loginUser(em, password);
-        const u = auth.currentUser;
-        if (!u) throw new Error("No Firebase user after login.");
+        // provider → dashboard
         setMessage("Login successful!");
-        navigate(`/patients/${u.uid}`, { replace: true });
+        navigate("/provider", { replace: true });
       }
     } catch (err) {
       setMessage(err?.message || "Something went wrong. Please try again.");
@@ -85,21 +92,50 @@ export default function Home() {
             <button className="login-btn" onClick={() => setRole("provider")}>PROVIDER LOGIN</button>
           </div>
         ) : (
-          <form className="login-form" onSubmit={handleSubmit} noValidate>
-            <h2>{role.toUpperCase()} {isRegister ? "REGISTER" : "LOGIN"}</h2>
-            <input type="email" placeholder="Email" value={email}
-              onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-            <input type="password" placeholder="Password" value={password}
-              onChange={(e) => setPassword(e.target.value)} required
-              autoComplete={isRegister ? "new-password" : "current-password"} />
-            <button className="login-btn" type="submit" disabled={status === "loading"}>
-              {status === "loading" ? (isRegister ? "Creating..." : "Signing in...") : (isRegister ? "Register" : "Login")}
-            </button>
-            <p className="toggle-link" onClick={() => setIsRegister(!isRegister)}>
-              {isRegister ? "Already have an account? Log in" : "Need an account? Register"}
-            </p>
-            {message && <p className="message">{message}</p>}
-          </form>
+          <>
+            <form className="login-form" onSubmit={handleSubmit} noValidate>
+              <h2>{role.toUpperCase()} LOGIN</h2>
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+              <button className="login-btn" type="submit" disabled={status === "loading"}>
+                {status === "loading" ? "Signing in..." : "Login"}
+              </button>
+
+              {/* Patient: no self-register. Provider: link to register page */}
+              {role === "patient" ? (
+                <p className="toggle-link" style={{ opacity: 0.8 }}>
+                  Patients must use credentials issued by a provider.
+                </p>
+              ) : (
+                <p className="toggle-link" onClick={() => navigate("/provider/register")}>
+                  Need a provider account? Register
+                </p>
+              )}
+
+              {message && <p className="message">{message}</p>}
+            </form>
+
+            {/* Back button */}
+            <div style={{ marginTop: 12 }}>
+              <button className="login-btn" onClick={() => setRole(null)} style={{ opacity: 0.8 }}>
+                Back
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -1,0 +1,169 @@
+/* ========== Page Layout ========== */
+.admin-page {
+  max-width: 1000px;
+  margin: 60px auto;
+  padding: 0 20px;
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto;
+  color: #e2e8f0;
+}
+
+/* Header */
+.admin-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.admin-header h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin-bottom: 4px;
+}
+.admin-header p {
+  font-size: 0.9rem;
+  color: #94a3b8;
+}
+
+/* ========== Card (section) ========== */
+.admin-card {
+  margin-bottom: 30px;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 16px;
+  padding: 16px;
+  backdrop-filter: blur(12px) saturate(140%);
+  box-shadow: 0 10px 25px rgba(2, 6, 23, 0.35);
+}
+
+.admin-card h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #f1f5f9;
+}
+
+.admin-helper {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-bottom: 10px;
+}
+
+/* ========== Table ========== */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  background: rgba(15, 23, 42, 0.35);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.admin-table th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #cbd5e1;
+  background: rgba(148, 163, 184, 0.06);
+  letter-spacing: 0.05em;
+}
+
+.admin-table td {
+  font-size: 0.9rem;
+}
+
+/* Empty message */
+.admin-empty {
+  text-align: center;
+  color: #94a3b8;
+  padding: 14px;
+  font-size: 0.85rem;
+}
+
+/* ========== Buttons ========== */
+.admin-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+.btn-approve {
+  background: rgba(22, 163, 74, 0.15);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #86efac;
+}
+
+.btn-deny {
+  background: rgba(220, 38, 38, 0.12);
+  border-color: rgba(248, 113, 113, 0.3);
+  color: #fca5a5;
+}
+
+.btn-delete {
+  background: rgba(244, 63, 94, 0.12);
+  border-color: rgba(251, 113, 133, 0.3);
+  color: #fda4af;
+}
+
+.btn-ghost {
+  background: rgba(148, 163, 184, 0.08);
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #e2e8f0;
+}
+
+/* ========== Modal Overlay ========== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal {
+  width: min(500px, 90vw);
+  background: rgba(15, 23, 42, 0.75);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #e2e8f0;
+  box-shadow: 0 10px 25px rgba(2, 6, 23, 0.4);
+}
+
+.modal h3 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.modal p {
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  margin-bottom: 18px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}

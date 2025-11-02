@@ -9,7 +9,7 @@ import "./Sidebar.css";
 export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, signOut: ctxSignOut } = useAuth() || {};
+  const { user, userType, signOut: ctxSignOut } = useAuth() || {};
 
   const handleLogout = async (e) => {
     e.preventDefault();
@@ -24,10 +24,10 @@ export default function Sidebar() {
     }
   };
 
-  // Base: /patients/:uid (or /home if no user)
+  // Build patient base path only if we have a user
   const patientBase = user ? `/patients/${user.uid}` : "/home";
 
-  // Read ?tab=... from URL
+  // Parse current ?tab= from URL for active highlight on patient tabs
   const qs = new URLSearchParams(location.search);
   const currentTab = (qs.get("tab") || "overview").toLowerCase();
 
@@ -36,48 +36,87 @@ export default function Sidebar() {
     search: `?tab=${tab}`,
   });
 
+  // Role-aware menu
+  const isPatient = userType === "patient";
+  const isProvider = userType === "provider";
+
   return (
     <div className="sidebar">
       <h2>PILLARS</h2>
       <nav className="sidebar-nav">
-        {/* Main Dashboard NavLink */}
-        <NavLink
-          to={toTab("overview")}
-          className={({ isActive }) =>
-            isActive && currentTab === "overview" ? "active" : ""
-          }
-          end
-        >
-          Overview
-        </NavLink>
+        {/* PATIENT MENU */}
+        {isPatient && (
+          <>
+            {/* Main Dashboard (Overview) */}
+            <NavLink
+              to={toTab("overview")}
+              className={({ isActive }) =>
+                isActive && currentTab === "overview" ? "active" : ""
+              }
+              end
+            >
+              Overview
+            </NavLink>
 
-        {/* Tab links using Link */}
-        
+            <Link
+              to={toTab("meds")}
+              className={currentTab === "meds" ? "active" : ""}
+            >
+              Medications
+            </Link>
 
-        <Link to={toTab("meds")} className={currentTab === "meds" ? "active" : ""}>
-          Medications
-        </Link>
+            <Link
+              to={toTab("alerts")}
+              className={currentTab === "alerts" ? "active" : ""}
+            >
+              Alerts
+            </Link>
 
-        <Link to={toTab("alerts")} className={currentTab === "alerts" ? "active" : ""}>
-          Alerts
-        </Link>
+            <Link
+              to={toTab("settings")}
+              className={currentTab === "settings" ? "active" : ""}
+            >
+              Settings
+            </Link>
+          </>
+        )}
 
-        <Link to={toTab("settings")} className={currentTab === "settings" ? "active" : ""}>
-          Settings
-        </Link>
+        {/* PROVIDER MENU */}
+        {isProvider && (
+          <NavLink
+            to="/provider"
+            className={({ isActive }) => (isActive ? "active" : "")}
+            end
+          >
+            Provider Dashboard
+          </NavLink>
+        )}
 
-        {/* Provider Dashboard NavLink */}
-        <NavLink
-          to="/provider"
-          className={({ isActive }) => (isActive ? "active" : "")}
-        >
-          Provider Dashboard
-        </NavLink>
+        {/* FALLBACK (unauth/unknown role) */}
+        {!isPatient && !isProvider && (
+          <>
+            <NavLink
+              to="/home"
+              className={({ isActive }) => (isActive ? "active" : "")}
+              end
+            >
+              Home
+            </NavLink>
+            <NavLink
+              to="/home"
+              className={({ isActive }) => (isActive ? "active" : "")}
+            >
+              Login
+            </NavLink>
+          </>
+        )}
 
-        {/* Logout */}
-        <a href="/home" onClick={handleLogout}>
-          Logout
-        </a>
+        {/* Logout (only show if signed in) */}
+        {user && (
+          <a href="/home" onClick={handleLogout}>
+            Logout
+          </a>
+        )}
       </nav>
     </div>
   );

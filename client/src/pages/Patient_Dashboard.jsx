@@ -1,47 +1,40 @@
+// src/pages/PatientDashboard.jsx
 import { useMemo, useState, useEffect } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
+import { db } from "../firebase";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+  where,
+  limit,
+  addDoc,
+  deleteDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 
-// =========== Shared look & feel (mirrors ProviderDashboard) ===========
-// Explicit color overrides so text doesn't turn white on light surfaces
+// ===== Shared look & feel (unchanged) =====
 const container   = { maxWidth: 960, margin: "0 auto" };
-const pageWrap    = {
-  marginLeft: "220px",
-  padding: "2rem",
-  flex: 1,
-  background: "#f8fafc",
-  minHeight: "100vh",
-  color: "#0f172a",
-};
-const card        = {
-  background: "#ffffff",
-  border: "1px solid #e5e7eb",
-  borderRadius: 12,
-  padding: 16,
-  color: "#0f172a",
-};
+const pageWrap    = { marginLeft: "220px", padding: "2rem", flex: 1, background: "#f8fafc", minHeight: "100vh", color: "#0f172a" };
+const card        = { background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 12, padding: 16, color: "#0f172a" };
 const cardHeader  = { marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" };
 const h1          = { fontSize: 28, fontWeight: 700, margin: 0, letterSpacing: 0.2 };
 const h2          = { fontSize: 18, fontWeight: 600, margin: 0 };
 const muted       = { color: "#64748b" };
-const input       = {
-  padding: "10px 12px",
-  border: "1px solid #cbd5e1",
-  borderRadius: 8,
-  outline: "none",
-  fontSize: 14,
-  width: "100%",
-  background: "#fff",
-  color: "#0f172a",
-};
+const input       = { padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: 8, outline: "none", fontSize: 14, width: "100%", background: "#fff", color: "#0f172a" };
 const buttonBase  = { padding: "10px 14px", borderRadius: 10, border: "1px solid transparent", cursor: "pointer", fontWeight: 600 };
 const btnPrimary  = { ...buttonBase, background: "#4176c6ff", color: "#fff" };
 const btnGhost    = { ...buttonBase, background: "#f8fafc", color: "#0f172a", border: "1px solid #e5e7eb" };
 const statCard    = { ...card, marginBottom: 0, padding: "12px 16px", minWidth: 180 };
 const row2        = { display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" };
 
-// =========== Demo interaction rules (unchanged) ===========
+// ===== Interaction rules (unchanged) =====
 const INTERACTIONS = {
   warfarin: ["ibuprofen", "naproxen", "aspirin", "amiodarone", "fluconazole"],
   ibuprofen: ["warfarin"],
@@ -49,9 +42,8 @@ const INTERACTIONS = {
   sildenafil: ["nitroglycerin", "isosorbide mononitrate", "isosorbide dinitrate"],
   metformin: ["cimetidine"],
 };
-
 function findConflicts(meds) {
-  const names = meds.map((m) => m.name.trim().toLowerCase());
+  const names = meds.map((m) => (m.name || "").trim().toLowerCase());
   const conflicts = [];
   for (let i = 0; i < names.length; i++) {
     const a = names[i];
@@ -59,20 +51,19 @@ function findConflicts(meds) {
     for (let j = i + 1; j < names.length; j++) {
       const b = names[j];
       if (badWith.includes(b) || (INTERACTIONS[b] || []).includes(a)) {
-        conflicts.push({ a: meds[i].name, b: meds[j].name });
+        conflicts.push({ a: (meds[i].name || ""), b: (meds[j].name || "") });
       }
     }
   }
   return conflicts;
 }
 
-// =========== 7-day schedule helpers (unchanged logic) ===========
+// ===== Week plan helpers (unchanged) =====
 const NOW = new Date();
 const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const addDays    = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 const formatDay  = (d) => d.toLocaleDateString(undefined, { weekday: "short" });
 const formatMd   = (d) => d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-
 function buildWeekPlan(meds, from = startOfDay(NOW)) {
   const days = [...Array(7)].map((_, i) => startOfDay(addDays(from, i)));
   const plan = days.map(() => []);
@@ -87,7 +78,7 @@ function buildWeekPlan(meds, from = startOfDay(NOW)) {
 
       const entry = { name: m.name, dose: m.dose, freq, prn: freq === "PRN" };
 
-      if (freq === "QOD" || freq === "QD" || freq === "AM" || freq === "PM" || freq === "HS") {
+      if (["QOD", "QD", "AM", "PM", "HS"].includes(freq)) {
         if (freq === "QOD") {
           const anchor = startOfDay(sd || NOW);
           const diff = Math.round((day - anchor) / 86400000);
@@ -102,9 +93,8 @@ function buildWeekPlan(meds, from = startOfDay(NOW)) {
         plan[idx].push({ ...entry, note: "AM" });
         plan[idx].push({ ...entry, note: "Noon" });
         plan[idx].push({ ...entry, note: "PM" });
-      } else if (freq === "PRN") {
-        plan[idx].push(entry);
       } else {
+        // PRN & unknown → just show
         plan[idx].push(entry);
       }
     });
@@ -112,7 +102,7 @@ function buildWeekPlan(meds, from = startOfDay(NOW)) {
   return { days, plan };
 }
 
-// =========== Small reusable pieces (styled like provider) ===========
+// ===== Small pieces =====
 function SectionCard({ title, right, children, maxWidth }) {
   return (
     <section style={{ ...card, ...(maxWidth ? { maxWidth } : {}) }}>
@@ -124,7 +114,6 @@ function SectionCard({ title, right, children, maxWidth }) {
     </section>
   );
 }
-
 function Stat({ label, value }) {
   return (
     <div style={statCard}>
@@ -134,11 +123,11 @@ function Stat({ label, value }) {
   );
 }
 
-// =========== Page ===========
+// ===== Page =====
 export default function PatientDashboard() {
   const { user, userType, loading, signOut } = useAuth();
 
-  // ?tab=overview|meds|alerts|settings
+  // Tabs via ?tab=
   const [params] = useSearchParams();
   const readTab = () => (params.get("tab") || "overview").toLowerCase();
   const [tab, setTab] = useState(readTab());
@@ -148,21 +137,97 @@ export default function PatientDashboard() {
   if (!user) return <Navigate to="/home" replace />;
   if (userType && userType !== "patient") return <Navigate to="/provider" replace />;
 
-  // Demo meds (unchanged)
-  const [meds, setMeds] = useState([
-    { id: "m1", name: "Warfarin",   dose: "5 mg",   freq: "QD",  started: "2025-10-01" },
-    { id: "m2", name: "Ibuprofen",  dose: "200 mg", freq: "PRN", started: "2025-10-18" },
-    { id: "m3", name: "Metformin",  dose: "850 mg", freq: "BID", started: "2025-06-11" },
-  ]);
+  // ---- Find this user's Patient doc (by UID, then email)
+  const [patientId, setPatientId] = useState(null);
+  const [patientLoading, setPatientLoading] = useState(true);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setPatientLoading(true);
+      try {
+        if (user?.uid) {
+          const byUid = await getDoc(doc(db, "Patients", user.uid));
+          if (byUid.exists()) { if (!cancelled) setPatientId(user.uid); return; }
+        }
+        if (user?.email) {
+          const qs = await getDocs(query(
+            collection(db, "Patients"),
+            where("email", "==", user.email),
+            limit(1)
+          ));
+          if (!qs.empty) { if (!cancelled) setPatientId(qs.docs[0].id); return; }
+        }
+        if (!cancelled) setPatientId(null);
+      } finally {
+        if (!cancelled) setPatientLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.uid, user?.email]);
+
+  // ---- Live meds from Firestore (provider RX + patient OTC)
+  const [meds, setMeds] = useState([]);
+  const [medsLoading, setMedsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!patientId) { setMeds([]); setMedsLoading(false); return; }
+    setMedsLoading(true);
+    const medsCol = collection(db, "Patients", patientId, "Medications");
+    const qMeds = query(medsCol, orderBy("createdAt", "desc"));
+    const unsub = onSnapshot(qMeds, (qs) => {
+      const arr = [];
+      qs.forEach((d) => {
+        const data = d.data() || {};
+        arr.push({
+          id: d.id,
+          name: data.name || "",
+          dose: data.dosage || data.dose || "",
+          freq: (data.frequency || data.freq || "QD").toUpperCase(),
+          started: data.started || (data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString().slice(0,10) : ""),
+          route: data.route || "",
+          kind: (data.kind || "").toLowerCase(), // 'rx' or 'otc'
+          createdBy: data.createdBy || null,
+          notes: data.notes || "",
+        });
+      });
+      setMeds(arr);
+      setMedsLoading(false);
+    }, () => setMedsLoading(false));
+    return () => unsub();
+  }, [patientId]);
+
+  // ---- Derived (unchanged)
   const conflicts = useMemo(() => findConflicts(meds), [meds]);
   const stats = useMemo(() => ({ active: meds.length, risky: conflicts.length }), [meds.length, conflicts.length]);
 
-  // ---- Embedded subcomponents (styled like provider) ----
+  // ---- Patient can add ONLY OTC; cannot remove provider RX
+  const addOTC = async (draft) => {
+    if (!patientId) return;
+    const medsCol = collection(db, "Patients", patientId, "Medications");
+    await addDoc(medsCol, {
+      name: draft.name.trim(),
+      dosage: draft.dose.trim(),
+      frequency: draft.freq,
+      route: draft.route || "",
+      kind: "otc",
+      notes: draft.notes || "",
+      createdAt: serverTimestamp(),
+      createdBy: user?.uid || null,
+    });
+  };
+  const removeIfOwnOTC = async (m) => {
+    if (!patientId) return;
+    // only allow delete if it's OTC and created by this user
+    if (m.kind === "otc" && m.createdBy && user?.uid && m.createdBy === user.uid) {
+      await deleteDoc(doc(db, "Patients", patientId, "Medications", m.id));
+    }
+  };
+
+  // ---- Sections (same look, now backed by Firestore) ----
   const WeekCalendar = () => {
     const { days, plan } = useMemo(() => buildWeekPlan(meds), [meds]);
     const todayIdx = 0;
-
     return (
       <div style={{ display: "grid", gap: 8, gridTemplateColumns: "repeat(7, minmax(120px, 1fr))", overflowX: "auto" }}>
         {days.map((d, i) => {
@@ -170,17 +235,7 @@ export default function PatientDashboard() {
           const nonPrnCount = items.filter((x) => !x.prn).length;
           const isToday = i === todayIdx;
           return (
-            <div
-              key={i}
-              style={{
-                border: "1px solid #e5e7eb",
-                borderRadius: 12,
-                background: isToday ? "#f1f5f9" : "#fff",
-                padding: 10,
-                minHeight: 120,
-                color: "#0f172a",
-              }}
-            >
+            <div key={i} style={{ border: "1px solid #e5e7eb", borderRadius: 12, background: isToday ? "#f1f5f9" : "#fff", padding: 10, minHeight: 120, color: "#0f172a" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                 <div style={{ fontSize: 12, color: "#64748b" }}>{formatDay(d)}</div>
                 <div style={{ fontSize: 12, color: "#64748b" }}>{formatMd(d)}</div>
@@ -214,9 +269,7 @@ export default function PatientDashboard() {
               <span style={{ fontSize: 18 }}>⚠️</span>
               <div>
                 <strong>{p.a}</strong> may interact with <strong>{p.b}</strong>.
-                <div style={{ fontSize: 12, color: "#64748b" }}>
-                  (Demo rules) Advise patient to consult provider/pharmacist.
-                </div>
+                <div style={{ fontSize: 12, color: "#64748b" }}>(Demo rules) Advise patient to consult provider/pharmacist.</div>
               </div>
             </li>
           ))}
@@ -227,108 +280,89 @@ export default function PatientDashboard() {
 
   const MedsSection = () => {
     const [filter, setFilter] = useState("");
-    const [draft, setDraft] = useState({ name: "", dose: "", freq: "QD" });
-    const filtered = meds.filter((m) => m.name.toLowerCase().includes(filter.toLowerCase()));
+    const [draft, setDraft] = useState({ name: "", dose: "", freq: "QD", route: "", notes: "" });
+    const filtered = meds.filter((m) => (m.name || "").toLowerCase().includes(filter.toLowerCase()));
 
     return (
       <>
-        {/* Add Medication */}
+        {/* Patient can add OTC only */}
         <div style={{ ...card, marginBottom: 16 }}>
-          <div style={cardHeader}><h2 style={h2}>Add Medication</h2></div>
-          <div style={{ display: "grid", gap: 8, maxWidth: 560 }}>
-            <input
-              style={input}
-              placeholder="Medication name"
-              value={draft.name}
-              onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-            />
-            <div style={{ display: "flex", gap: 8 }}>
-              <input
-                style={{ ...input, flex: 1 }}
-                placeholder="Dose (e.g., 10 mg)"
-                value={draft.dose}
-                onChange={(e) => setDraft((d) => ({ ...d, dose: e.target.value }))}
-              />
-              <select
-                style={{ ...input, flex: 1, height: 42 }}
-                value={draft.freq}
-                onChange={(e) => setDraft((d) => ({ ...d, freq: e.target.value }))}
-              >
-                {["QD", "BID", "TID", "QOD", "AM", "PM", "HS", "PRN"].map((f) => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
+          <div style={cardHeader}><h2 style={h2}>Add OTC Medication</h2></div>
+          <div style={{ display: "grid", gap: 8, maxWidth: 680 }}>
+            <input style={input} placeholder="Medication name" value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} />
+            <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr 1fr" }}>
+              <input style={input} placeholder="Dose (e.g., 200 mg)" value={draft.dose} onChange={(e) => setDraft((d) => ({ ...d, dose: e.target.value }))} />
+              <select style={{ ...input, height: 42 }} value={draft.freq} onChange={(e) => setDraft((d) => ({ ...d, freq: e.target.value }))}>
+                {["QD", "BID", "TID", "QOD", "AM", "PM", "HS", "PRN"].map((f) => (<option key={f} value={f}>{f}</option>))}
               </select>
+              <input style={input} placeholder="Route (e.g., PO)" value={draft.route} onChange={(e) => setDraft((d) => ({ ...d, route: e.target.value }))} />
             </div>
+            <input style={input} placeholder="Notes" value={draft.notes} onChange={(e) => setDraft((d) => ({ ...d, notes: e.target.value }))} />
             <div style={{ display: "flex", gap: 8 }}>
               <button
                 className="login-btn"
                 style={btnPrimary}
-                onClick={() => {
+                onClick={async () => {
                   if (!draft.name.trim()) return;
-                  setMeds((xs) => [
-                    ...xs,
-                    {
-                      id: crypto.randomUUID(),
-                      name: draft.name.trim(),
-                      dose: draft.dose.trim(),
-                      freq: draft.freq,
-                      started: new Date().toISOString().slice(0, 10),
-                    },
-                  ]);
-                  setDraft({ name: "", dose: "", freq: "QD" });
+                  await addOTC(draft);
+                  setDraft({ name: "", dose: "", freq: "QD", route: "", notes: "" });
                 }}
               >
-                Add
+                Add OTC
               </button>
-              <button className="login-btn" style={btnGhost} onClick={() => setDraft({ name: "", dose: "", freq: "QD" })}>
+              <button className="login-btn" style={btnGhost} onClick={() => setDraft({ name: "", dose: "", freq: "QD", route: "", notes: "" })}>
                 Clear
               </button>
+            </div>
+            <div style={{ fontSize: 12, color: "#64748b" }}>
+              You can add over-the-counter meds. Provider-prescribed meds are read-only here.
             </div>
           </div>
         </div>
 
-        {/* Medications List */}
+        {/* Medications List (provider RX + your OTC) */}
         <div style={{ ...card, marginBottom: 16 }}>
           <div style={cardHeader}>
             <h2 style={h2}>Medications</h2>
-            <input
-              placeholder="Filter by name…"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              style={{ ...input, width: 240 }}
-            />
+            <input placeholder="Filter by name…" value={filter} onChange={(e) => setFilter(e.target.value)} style={{ ...input, width: 240 }} />
           </div>
 
-          {filtered.length ? (
+          {medsLoading ? (
+            <div style={{ color: "#64748b" }}>Loading…</div>
+          ) : filtered.length ? (
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ textAlign: "left" }}>
-                  {["Name", "Dose", "Freq", "Started"].map((h) => (
-                    <th key={h} style={{ borderBottom: "1px solid #e5e7eb", padding: "8px 4px", fontWeight: 600 }}>
-                      {h}
-                    </th>
+                  {["Name", "Dose", "Freq", "Started", "Type", "Source"].map((h) => (
+                    <th key={h} style={{ borderBottom: "1px solid #e5e7eb", padding: "8px 4px", fontWeight: 600 }}>{h}</th>
                   ))}
                   <th style={{ borderBottom: "1px solid #e5e7eb", padding: "8px 4px" }} />
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((m) => (
-                  <tr key={m.id}>
-                    <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9" }}>{m.name}</td>
-                    <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9" }}>{m.dose}</td>
-                    <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9" }}>{m.freq}</td>
-                    <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9" }}>{m.started || "-"}</td>
-                    <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9", textAlign: "right" }}>
-                      <button
-                        className="login-btn"
-                        style={btnGhost}
-                        onClick={() => setMeds((xs) => xs.filter((x) => x.id !== m.id))}
-                      >
-                        Remove
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filtered.map((m) => {
+                  const isProvider = m.kind === "rx";
+                  const isYourOTC = m.kind === "otc" && m.createdBy === user?.uid;
+                  return (
+                    <tr key={m.id}>
+                      <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9" }}>{m.name}</td>
+                      <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9" }}>{m.dose}</td>
+                      <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9" }}>{m.freq}</td>
+                      <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9" }}>{m.started || "-"}</td>
+                      <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9" }}>{(m.kind || "").toUpperCase()}</td>
+                      <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9" }}>
+                        {isProvider ? "Provider" : isYourOTC ? "You" : "Other"}
+                      </td>
+                      <td style={{ padding: "8px 4px", borderBottom: "1px solid #f1f5f9", textAlign: "right" }}>
+                        {isYourOTC ? (
+                          <button className="login-btn" style={btnGhost} onClick={() => removeIfOwnOTC(m)}>Remove</button>
+                        ) : (
+                          <span style={{ fontSize: 12, color: "#64748b" }}>{isProvider ? "read-only" : ""}</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           ) : (
@@ -374,13 +408,35 @@ export default function PatientDashboard() {
     </div>
   );
 
-  // =========== Layout ===========
+  // ---- Load states / layout (unchanged) ----
+  if (patientLoading) {
+    return (
+      <div style={{ display: "flex" }}>
+        <Sidebar />
+        <div style={pageWrap}><div style={container}><div style={{ ...card }}>Loading your profile…</div></div></div>
+      </div>
+    );
+  }
+  if (!patientId) {
+    return (
+      <div style={{ display: "flex" }}>
+        <Sidebar />
+        <div style={pageWrap}>
+          <div style={container}>
+            <div style={{ ...card }}>
+              <h2 style={h2}>We couldn’t find your patient record.</h2>
+              <p style={muted}>Ask your provider to make sure your email/UID matches your Patient document in Firestore.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div style={{ display: "flex" }}>
       <Sidebar />
       <div style={pageWrap}>
         <div style={container}>
-          {/* Tabs are driven by ?tab=... from Sidebar; header inside each section */}
           {tab === "overview" && <Overview />}
           {tab === "meds" && <MedsSection />}
           {tab === "alerts" && <AlertsSection />}
