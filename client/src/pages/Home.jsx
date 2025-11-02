@@ -7,6 +7,8 @@ import { useAuth } from "../context/AuthContext";
 import { doc, getDoc } from "firebase/firestore";
 import "../home.css";
 
+
+
 export default function Home() {
   const navigate = useNavigate();
   const { mock, loginMock, getMockUid } = useAuth();

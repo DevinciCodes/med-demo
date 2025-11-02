@@ -1,5 +1,4 @@
-// src/pages/ProviderDashboard.jsx
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { auth, db } from "../firebase";
@@ -20,7 +19,7 @@ import {
   limit,
 } from "firebase/firestore";
 
-// ===== Your original mock data (kept for fallback/testing) =====
+// ===== fallback mock data (unchanged) =====
 const mockPatients = [
   { id: "p1", name: "John Doe", email: "john.doe@example.com", dob: "1990-01-15", phone: "111-111-1111", addr:"3920 Lakeview Drive, Austin, TX 78745" },
   { id: "p2", name: "Jane Smith", email: "jane.smith@example.com", dob: "1985-07-22", phone: "098-765-4321", addr:"5871 Maplewood Avenue, Columbus, OH 43214" },
@@ -37,12 +36,14 @@ const h2          = { fontSize: 18, fontWeight: 600, margin: 0, color: "#0f172a"
 const muted       = { color: "#64748b" };
 const labelStyle  = { display: "block", fontSize: 12, color: "#475569", marginBottom: 6 };
 const input       = { padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: 8, outline: "none", fontSize: 14, width: "100%", background: "#fff", color: "#0f172a" };
+const inputDisabled = { ...input, background: "#f1f5f9", color: "#64748b", cursor: "not-allowed" };
 const row2        = { display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" };
 const row3        = { display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr 1fr" };
 const buttonBase  = { padding: "10px 14px", borderRadius: 10, border: "1px solid transparent", cursor: "pointer", fontWeight: 600 };
 const btnPrimary  = { ...buttonBase, background: "#4176c6", color: "#fff" };
 const btnGhost    = { ...buttonBase, background: "#f8fafc", color: "#0f172a", border: "1px solid #e5e7eb" };
 const bannerOk    = { margin: "12px 0", padding: 12, borderRadius: 10, border: "1px solid #a7f3d0", background: "#ecfdf5", color: "#065f46" };
+const bannerWarn  = { margin: "12px 0", padding: 12, borderRadius: 10, border: "1px solid #fde68a", background: "#fffbeb", color: "#7c2d12" };
 const bannerErr   = { margin: "12px 0", padding: 12, borderRadius: 10, border: "1px solid #fecaca", background: "#fef2f2", color: "#991b1b" };
 
 function genTempPassword() {
@@ -57,6 +58,34 @@ export default function ProviderDashboard() {
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
   const [tempCreds, setTempCreds] = useState(null);
+
+  // ===== provider institution (loaded from Providers/{uid}) =====
+  const [myInst, setMyInst] = useState("");
+  const [myInstLower, setMyInstLower] = useState("");
+  const [instLoading, setInstLoading] = useState(true);
+
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      try {
+        const uid = auth.currentUser?.uid;
+        if (!uid) return;
+        // Expecting a Provider doc written by /api/public/provider_register
+        const snap = await getDoc(doc(db, "Providers", uid));
+        const data = snap.exists() ? snap.data() : {};
+        const inst = (data.institution || "").trim();
+        if (!cancel) {
+          setMyInst(inst);
+          setMyInstLower(inst.toLowerCase());
+        }
+      } catch (e) {
+        if (!cancel) setErr(`Could not read provider profile: ${e.message}`);
+      } finally {
+        if (!cancel) setInstLoading(false);
+      }
+    })();
+    return () => { cancel = true; };
+  }, []);
 
   // ===== search state =====
   const [search, setSearch] = useState("");
@@ -101,13 +130,17 @@ export default function ProviderDashboard() {
     catch { setErr("Could not copy to clipboard."); }
   };
 
-  // ====== CREATE PATIENT via backend (kept as you had it) ======
+  // ====== CREATE PATIENT with institution enforced ======
   const handleCreatePatient = async (e) => {
     e.preventDefault();
     setMsg(""); setErr(""); setTempCreds(null);
 
     if (!firstName || !lastName || !email) {
       setErr("First name, last name, and email are required.");
+      return;
+    }
+    if (!myInstLower) {
+      setErr("Your provider profile is missing an Institution. Please contact an admin.");
       return;
     }
 
@@ -133,8 +166,11 @@ export default function ProviderDashboard() {
         tempPassword,
         providerId,
         providerEmail,
-        // TIP: if your backend writes to Firestore, also save nameLower there:
-        // nameLower: `${firstName} ${lastName}`.toLowerCase()
+        institution: myInst,
+        institutionLower: myInstLower,
+        // nameLower recommended if your backend writes the doc:
+        // nameLower: `${firstName} ${lastName}`.toLowerCase(),
+        createdAt: serverTimestamp(),
       };
 
       const res = await fetch("/api/provider/create_patient", {
@@ -174,10 +210,15 @@ export default function ProviderDashboard() {
     }
   };
 
-  // ====== SEARCH: Firestore-first, fallback to mock ======
+  // ====== SEARCH (scoped to provider's institution) ======
   const handleSearch = async (e) => {
     e.preventDefault();
     setMsg(""); setErr("");
+
+    if (!myInstLower) {
+      setErr("Cannot search: missing provider institution.");
+      return;
+    }
 
     const term = (search || "").trim();
     const patientsCol = collection(db, "Patients");
@@ -186,11 +227,12 @@ export default function ProviderDashboard() {
       let found = [];
 
       if (term) {
-        // Preferred: prefix search on nameLower (if your docs have it)
+        // Preferred: prefix search on nameLower within institution
         try {
           const lower = term.toLowerCase();
           const q1 = query(
             patientsCol,
+            where("institutionLower", "==", myInstLower),
             orderBy("nameLower"),
             startAt(lower),
             endAt(lower + "\uf8ff"),
@@ -213,9 +255,14 @@ export default function ProviderDashboard() {
           // ignore and fall through to fallback
         }
 
-        // Fallback: light client filter over recent (if nameLower missing)
+        // Fallback: recent-institution then filter client-side if nameLower missing
         if (found.length === 0) {
-          const q2 = query(patientsCol, orderBy("createdAt", "desc"), limit(200));
+          const q2 = query(
+            patientsCol,
+            where("institutionLower", "==", myInstLower),
+            orderBy("createdAt", "desc"),
+            limit(200)
+          );
           const snap = await getDocs(q2);
           const termLower = term.toLowerCase();
           snap.forEach((d) => {
@@ -234,8 +281,13 @@ export default function ProviderDashboard() {
           });
         }
       } else {
-        // No term: show recent
-        const q3 = query(patientsCol, orderBy("createdAt", "desc"), limit(25));
+        // No term: recent patients in my institution
+        const q3 = query(
+          patientsCol,
+          where("institutionLower", "==", myInstLower),
+          orderBy("createdAt", "desc"),
+          limit(25)
+        );
         const snap = await getDocs(q3);
         snap.forEach((d) => {
           const data = d.data() || {};
@@ -251,7 +303,7 @@ export default function ProviderDashboard() {
         });
       }
 
-      // If Firestore empty, fall back to mock
+      // If Firestore empty, fall back to mock (demo only)
       if (found.length === 0 && term) {
         const filtered = mockPatients.filter((p) =>
           p.name.toLowerCase().includes(term.toLowerCase())
@@ -261,6 +313,7 @@ export default function ProviderDashboard() {
         setResults(found);
       }
     } catch (e) {
+      // If Firestore throws “requires an index”, Firestore gives a link in the error text.
       setErr(`Search failed: ${e.message}`);
     }
   };
@@ -394,7 +447,9 @@ export default function ProviderDashboard() {
           <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
             <div>
               <h1 style={h1}>Provider Dashboard</h1>
-              <div style={{ ...muted, fontSize: 14 }}>Create patient, search Firestore, edit profile, and manage meds.</div>
+              <div style={{ ...muted, fontSize: 14 }}>
+                Create patient, search Firestore, edit profile, and manage meds.
+              </div>
             </div>
             <button style={btnPrimary} onClick={() => setShowCreate((v) => !v)}>
               {showCreate ? "Close" : "Create Patient"}
@@ -402,25 +457,14 @@ export default function ProviderDashboard() {
           </div>
 
           {/* Banners */}
-          {msg && <div style={bannerOk}>{msg}</div>}
-          {err && <div style={bannerErr}>{err}</div>}
-          {tempCreds && (
-            <div style={{ ...card, marginBottom: 16 }}>
-              <div style={cardHeader}>
-                <h2 style={h2}>Temporary Patient Portal Credentials</h2>
-              </div>
-              <div style={{ lineHeight: 1.9 }}>
-                <div>Email: <code style={{ color: "#0f172a" }}>{tempCreds.email}</code></div>
-                <div>Temp Password: <code style={{ color: "#0f172a" }}>{tempCreds.tempPassword}</code></div>
-                <div style={{ fontSize: 12, color: "#64748b" }}>
-                  User must reset their password on first login.
-                </div>
-              </div>
-              <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-                <button style={btnGhost} onClick={copyCreds}>Copy</button>
-              </div>
+          {instLoading && <div style={bannerWarn}>Loading your provider profile…</div>}
+          {!instLoading && !myInst && (
+            <div style={bannerWarn}>
+              Your provider profile has no <strong>Institution</strong>. New patients will be blocked until it’s set.
             </div>
           )}
+          {msg && <div style={bannerOk}>{msg}</div>}
+          {err && <div style={bannerErr}>{err}</div>}
 
           {/* Create Patient (collapsible) */}
           {showCreate && (
@@ -448,6 +492,17 @@ export default function ProviderDashboard() {
                     <label style={labelStyle}>DOB</label>
                     <input style={input} type="text" value={dob} onChange={(e) => setDob(e.target.value)} placeholder="YYYY-MM-DD" />
                   </div>
+                </div>
+
+                {/* Institution (required, locked to provider's institution) */}
+                <div>
+                  <label style={labelStyle}>Institution *</label>
+                  <input
+                    style={inputDisabled}
+                    value={myInst || ""}
+                    placeholder="(Institution from your profile)"
+                    disabled
+                  />
                 </div>
 
                 <div style={row2}>
@@ -485,7 +540,7 @@ export default function ProviderDashboard() {
                   ))}
                 </div>
 
-                {/* Schedule (optional UI only for now) */}
+                {/* Schedule (optional UI only) */}
                 <div style={{ marginTop: 8 }}>
                   <div style={{ marginBottom: 8, fontWeight: 600, color: "#0f172a" }}>Schedule (optional)</div>
                   <div style={row2}>
@@ -506,13 +561,13 @@ export default function ProviderDashboard() {
 
                 <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                   <button type="button" style={btnGhost} onClick={() => setShowCreate(false)}>Cancel</button>
-                  <button type="submit" style={btnPrimary}>Create Patient</button>
+                  <button type="submit" style={btnPrimary} disabled={!myInstLower}>Create Patient</button>
                 </div>
               </form>
             </div>
           )}
 
-          {/* Patient Lookup */}
+          {/* Patient Lookup (scoped to institution) */}
           <div style={{ ...card, marginBottom: 16 }}>
             <div style={cardHeader}>
               <h2 style={h2}>Patient Lookup</h2>
@@ -521,12 +576,13 @@ export default function ProviderDashboard() {
             <form onSubmit={handleSearch} style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <input
                 type="text"
-                placeholder="Search Firestore patients by name…"
+                placeholder="Search patients by name…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 style={{ ...input, width: 320 }}
+                disabled={!myInstLower}
               />
-              <button type="submit" className="login-btn" style={btnGhost}>
+              <button type="submit" className="login-btn" style={btnGhost} disabled={!myInstLower}>
                 Search
               </button>
             </form>
@@ -546,7 +602,9 @@ export default function ProviderDashboard() {
                 ))}
               </ul>
             ) : (
-              <p style={{ ...muted, marginTop: 12 }}>No results yet. Try typing a name, or leave blank and press Search to see recent.</p>
+              <p style={{ ...muted, marginTop: 12 }}>
+                {myInstLower ? "No results yet. Try a name, or leave blank and press Search to see recent." : "Enter via a provider account with an Institution to search."}
+              </p>
             )}
           </div>
 
@@ -558,12 +616,8 @@ export default function ProviderDashboard() {
                 {!isEditing ? (
                   <div style={{ display: "flex", gap: 8 }}>
                     <button className="login-btn" style={btnGhost} onClick={startEdit}>Edit Profile</button>
-                    <button className="login-btn" style={btnPrimary} onClick={handleNewPrescription}>
-                      New Prescription
-                    </button>
-                    <button className="login-btn" style={btnGhost} onClick={() => setSelectedPatient(null)}>
-                      Close
-                    </button>
+                    <button className="login-btn" style={btnPrimary} onClick={handleNewPrescription}>New Prescription</button>
+                    <button className="login-btn" style={btnGhost} onClick={() => setSelectedPatient(null)}>Close</button>
                   </div>
                 ) : (
                   <div style={{ display: "flex", gap: 8 }}>

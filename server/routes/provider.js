@@ -20,6 +20,8 @@ router.post("/create_patient", async (req, res) => {
       phone = "",
       allergies = [],
       tempPassword,
+      institution,
+      institutionLower,
       providerId = null,
       providerEmail = null,
     } = req.body || {};
@@ -49,7 +51,9 @@ router.post("/create_patient", async (req, res) => {
         phone,
         allergies,
         status: "active",
-        mustReset: true, // <-- Home.jsx checks this to force reset
+        mustReset: true,
+        institution,
+        institutionLower, // <-- Home.jsx checks this to force reset
         providerId,
         providerEmail,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
