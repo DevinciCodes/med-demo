@@ -1,22 +1,27 @@
-const express = require('express');
-const cors = require('cors');
+// server/index.js
+require("dotenv").config();
+
+const express = require("express");
+const cors = require("cors");
+const providerRoutes = require("./routes/provider"); // <-- import the route (CommonJS)
+const adminRoutes = require("./routes/admin");
+const publicRoutes = require("./routes/public");
+
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-app.get('/api/health', (req, res) => {
-  res.json({ ok: true, service: 'med-demo', time: new Date().toISOString() });
-});
+// Mount routes
+app.use("/api/provider", providerRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/public", publicRoutes);
 
-app.get('/api/message', (req, res) => {
-  res.json({ message: 'Hello from the server!' });
-});
+// Health check
+app.get("/health", (_req, res) => res.json({ ok: true }));
 
-// helpful 404 to confirm what path you’re actually hitting
-app.use((req, res) => {
-  res.status(404).json({ error: 'not found', path: req.url });
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`API listening on http://localhost:${PORT}`);
 });
-
-const PORT = process.env.PORT || 5050;
-app.listen(PORT, () => console.log(`API listening on http://localhost:${PORT}`));
