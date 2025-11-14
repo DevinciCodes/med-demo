@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { db, auth } from "../firebase"; // 👈 make sure this exists and exports Firestore + Auth
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import MedAutocomplete from "../components/MedAutoComplete";
+import { MEDICATION_NAMES } from "../components/medNamesToBeReplacedWithFirebase";
 
 // ===== Your original mock data (unchanged for search) =====
 const mockPatients = [
@@ -254,7 +256,7 @@ export default function ProviderDashboard() {
                   <div style={{ marginBottom: 8, fontWeight: 600, color: "#0f172a" }}>Initial Medications (optional)</div>
                   {meds.map((m, i) => (
                     <div key={i} style={{ ...row3, alignItems: "center", marginBottom: 8 }}>
-                      <input style={input} placeholder="Name (e.g., Lisinopril)" value={m.name} onChange={(e) => updateMed(i, "name", e.target.value)} />
+                      <MedAutocomplete options={MEDICATION_NAMES} inputStyle={input} placeholder="Name (e.g., Lisinopril)" value={m.name} onChange={(val) => updateMed(i, "name", val)} />
                       <input style={input} placeholder="Dosage (e.g., 10 mg)" value={m.dosage} onChange={(e) => updateMed(i, "dosage", e.target.value)} />
                       <input style={input} placeholder="Frequency (e.g., daily)" value={m.frequency} onChange={(e) => updateMed(i, "frequency", e.target.value)} />
                       <input style={input} placeholder="Route (e.g., PO)" value={m.route} onChange={(e) => updateMed(i, "route", e.target.value)} />

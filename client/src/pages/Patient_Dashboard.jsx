@@ -4,6 +4,8 @@ import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
+import MedAutocomplete from "../components/MedAutoComplete";
+import { MEDICATION_NAMES } from "../components/medNamesToBeReplacedWithFirebase";
 
 // =========== Shared look & feel (mirrors ProviderDashboard) ===========
 // Explicit color overrides so text doesn't turn white on light surfaces
@@ -258,11 +260,14 @@ export default function PatientDashboard() {
         <div style={{ ...card, marginBottom: 16 }}>
           <div style={cardHeader}><h2 style={h2}>Add Medication</h2></div>
           <div style={{ display: "grid", gap: 8, maxWidth: 560 }}>
-            <input
-              style={input}
+            <MedAutocomplete
+              options={MEDICATION_NAMES}
+              inputStyle={input}
               placeholder="Medication name"
               value={draft.name}
-              onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+              onChange={(val) =>
+                setDraft((d) => ({ ...d, name: val }))
+              }
             />
             <div style={{ display: "flex", gap: 8 }}>
               <input
