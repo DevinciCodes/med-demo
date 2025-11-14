@@ -85,7 +85,7 @@ export default function MedAutocomplete({
     return (
         <div ref={containerRef} style={{ position: "relative" }}>
             <input
-                className="input"          // styled in your CSS
+                className="input"          // style in CSS
                 style={inputStyle}
                 type="text"
                 placeholder={placeholder}

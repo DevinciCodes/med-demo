@@ -6,8 +6,9 @@
     "\\client\\src",
     "\\client\\src\\components",
     "\\client\\src\\lib",
-    "\\client\\src\\pages"
+    "\\client\\src\\pages",
+    "\\server"
   ],
-  "SelectedNode": "\\client\\src\\pages\\PrescriptionForm.jsx",
+  "SelectedNode": "\\client\\src\\components\\MedAutoComplete.jsx",
   "PreviewInSolutionExplorer": false
 }

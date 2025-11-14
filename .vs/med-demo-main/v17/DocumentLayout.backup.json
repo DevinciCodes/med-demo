@@ -3,20 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\Steven Sewell\\OneDrive\\Desktop\\med-demo-main\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Steven Sewell\\OneDrive\\Desktop\\med-demo-main\\client\\src\\components\\MedAutoComplete.jsx||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:client\\src\\components\\MedAutoComplete.jsx||{8B382828-6202-11D1-8870-0000F87579D2}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Steven Sewell\\OneDrive\\Desktop\\med-demo-main\\client\\src\\pages\\PrescriptionForm.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:client\\src\\pages\\PrescriptionForm.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Steven Sewell\\OneDrive\\Desktop\\med-demo-main\\client\\src\\pages\\Patient_Dashboard.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:client\\src\\pages\\Patient_Dashboard.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Steven Sewell\\OneDrive\\Desktop\\med-demo-main\\client\\src\\pages\\PrescriptionForm.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:client\\src\\pages\\PrescriptionForm.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Steven Sewell\\OneDrive\\Desktop\\med-demo-main\\client\\src\\pages\\Provider_Dashboard.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:client\\src\\pages\\Provider_Dashboard.jsx||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Steven Sewell\\OneDrive\\Desktop\\med-demo-main\\client\\src\\components\\MedAutocomplete.jsx||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:client\\src\\components\\MedAutocomplete.jsx||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Steven Sewell\\OneDrive\\Desktop\\med-demo-main\\client\\src\\components\\medNamesToBeReplacedWithFirebase.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
@@ -34,11 +34,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 2,
               "Title": "Provider_Dashboard.jsx",
               "DocumentMoniker": "C:\\Users\\Steven Sewell\\OneDrive\\Desktop\\med-demo-main\\client\\src\\pages\\Provider_Dashboard.jsx",
               "RelativeDocumentMoniker": "client\\src\\pages\\Provider_Dashboard.jsx",
@@ -46,17 +46,18 @@
               "RelativeToolTip": "client\\src\\pages\\Provider_Dashboard.jsx",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003663|",
-              "WhenOpened": "2025-11-14T16:56:13.386Z"
+              "WhenOpened": "2025-11-14T16:56:13.386Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 0,
               "Title": "PrescriptionForm.jsx",
               "DocumentMoniker": "C:\\Users\\Steven Sewell\\OneDrive\\Desktop\\med-demo-main\\client\\src\\pages\\PrescriptionForm.jsx",
               "RelativeDocumentMoniker": "client\\src\\pages\\PrescriptionForm.jsx",
               "ToolTip": "C:\\Users\\Steven Sewell\\OneDrive\\Desktop\\med-demo-main\\client\\src\\pages\\PrescriptionForm.jsx",
               "RelativeToolTip": "client\\src\\pages\\PrescriptionForm.jsx",
-              "ViewState": "AgIAABQAAAAAAAAAAAAQwDQAAAAKAAAAAAAAAA==",
+              "ViewState": "AgIAAAgAAAAAAAAAAAAQwDQAAAAKAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003663|",
               "WhenOpened": "2025-11-14T16:45:48.392Z",
               "EditorCaption": ""
@@ -71,17 +72,18 @@
               "RelativeToolTip": "client\\src\\components\\medNamesToBeReplacedWithFirebase.js",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAPAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2025-11-14T16:42:40.37Z"
+              "WhenOpened": "2025-11-14T16:42:40.37Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 3,
               "Title": "MedAutoComplete.jsx",
               "DocumentMoniker": "C:\\Users\\Steven Sewell\\OneDrive\\Desktop\\med-demo-main\\client\\src\\components\\MedAutoComplete.jsx",
               "RelativeDocumentMoniker": "client\\src\\components\\MedAutoComplete.jsx",
               "ToolTip": "C:\\Users\\Steven Sewell\\OneDrive\\Desktop\\med-demo-main\\client\\src\\components\\MedAutoComplete.jsx",
               "RelativeToolTip": "client\\src\\components\\MedAutoComplete.jsx",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAFcAAAAzAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB8AAAAlAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003663|",
               "WhenOpened": "2025-11-14T16:34:16.415Z",
               "EditorCaption": ""
@@ -94,7 +96,7 @@
               "RelativeDocumentMoniker": "client\\src\\pages\\Patient_Dashboard.jsx",
               "ToolTip": "C:\\Users\\Steven Sewell\\OneDrive\\Desktop\\med-demo-main\\client\\src\\pages\\Patient_Dashboard.jsx",
               "RelativeToolTip": "client\\src\\pages\\Patient_Dashboard.jsx",
-              "ViewState": "AgIAAPIAAAAAAAAAAAAIwAcAAABSAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAABSAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003663|",
               "WhenOpened": "2025-11-14T16:03:05.65Z",
               "EditorCaption": ""
@@ -109,7 +111,8 @@
               "RelativeToolTip": "client\\src\\firebase.js",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2025-11-14T16:14:32.964Z"
+              "WhenOpened": "2025-11-14T16:14:32.964Z",
+              "EditorCaption": ""
             }
           ]
         }
