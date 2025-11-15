@@ -1,0 +1,26 @@
+// src/data/medNames.js
+export const MEDICATION_NAMES = [
+    "Metformin",
+    "Metoprolol",
+    "Metronidazole",
+    "Methyldopa",
+    "Miconazole",
+    "Misoprostol",
+    "Mometazone",
+    "Morphine",
+    "Methadone",
+    "Mannitol",
+    "Mebendazole",
+    "Mesalazine",
+    "Atorvastatin",
+    "Simvastatin",
+    "Amlodipine",
+    "Lisinopril",
+    "Losartan",
+    "Omeprazole",
+    "Levothyroxine",
+    "Warfarin",
+    "Ibuprofen",
+    "Acetaminophen",
+    // add more as needed
+];

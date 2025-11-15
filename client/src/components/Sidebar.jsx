@@ -55,7 +55,7 @@ export default function Sidebar() {
               }
               end
             >
-              Overview
+              Patient Dashboard
             </NavLink>
 
             <Link

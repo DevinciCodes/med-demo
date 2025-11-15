@@ -1,6 +1,8 @@
 // src/pages/PrescriptionForm.jsx
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { MEDICATION_NAMES } from "../components/medNamesToBeReplacedWithFirebase"; //new
+import MedAutocomplete from "../components/MedAutoComplete";
 
 export default function PrescriptionForm() {
   const navigate = useNavigate();
@@ -34,13 +36,21 @@ export default function PrescriptionForm() {
     <div style={{ padding: "2rem" }}>
       <h1>New Prescription</h1>
       <form style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxWidth: "400px" }} onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="medication"
+        {/*<input*/}
+        {/*  type="text"*/}
+        {/*  name="medication"*/}
+        {/*  placeholder="Drug"*/}
+        {/*  value={formData.medication}*/}
+        {/*  onChange={handleChange}*/}
+        {/*  required*/}
+        {/*/>*/}
+        <MedAutocomplete
+          options={MEDICATION_NAMES}
           placeholder="Drug"
           value={formData.medication}
-          onChange={handleChange}
-          required
+          onChange={(val) =>
+            setFormData((prev) => ({ ...prev, medication: val }))
+          }
         />
         <input
           type="text"
