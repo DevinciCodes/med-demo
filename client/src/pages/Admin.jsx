@@ -2,15 +2,25 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
+import { signOut } from "firebase/auth";
+import { auth } from "../firebase";
+import { useNavigate } from "react-router-dom";
 import "../styles/admin.css";
 
 export default function Admin() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [pending, setPending] = useState([]);
   const [active, setActive] = useState([]);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
+
+  // ---- LOGOUT ----
+  const logout = async () => {
+    await signOut(auth);
+    navigate("/", { replace: true });
+  };
 
   // Load both tables
   const load = async () => {
@@ -34,7 +44,6 @@ export default function Admin() {
     load();
   }, []);
 
-  // Approve or deny a pending provider
   const take = async (id, approve = true) => {
     try {
       await api("/api/admin/approve_provider", {
@@ -47,7 +56,6 @@ export default function Admin() {
     }
   };
 
-  // Delete an active provider
   const removeProvider = async (id) => {
     const ok = window.confirm(
       "Are you sure you want to delete this provider's account?"
@@ -66,9 +74,29 @@ export default function Admin() {
 
   return (
     <main className="admin-page">
-      <div className="admin-header">
-        <h1>Admin Panel</h1>
-        <p>Signed in as Admin: {user?.email || "—"}</p>
+      <div className="admin-header" style={{ textAlign: "center" }}>
+        <h1 style={{ marginBottom: 4 }}>Admin Panel</h1>
+        <p style={{ marginBottom: 10 }}>
+          Signed in as Admin: {user?.email || "—"}
+        </p>
+
+        {/* 🔥 LOGOUT BUTTON ADDED (Centered under header) */}
+        <button
+          onClick={logout}
+          style={{
+            padding: "8px 16px",
+            background: "#ef4444",
+            borderRadius: 8,
+            border: "none",
+            color: "white",
+            fontWeight: 600,
+            cursor: "pointer",
+            marginTop: 6,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+          }}
+        >
+          Logout
+        </button>
       </div>
 
       {err && <div className="error-bar">{err}</div>}

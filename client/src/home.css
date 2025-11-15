@@ -1,10 +1,14 @@
-/* src/home.css */
-.home {
+/* Full page container (unchanged) */
+.home-container {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100vh;
   flex-direction: column;
+  text-align: center;
+}
+
+.home-content {
   text-align: center;
 }
 
@@ -15,10 +19,6 @@
   margin-bottom: 0.5rem;
 }
 
-.home-title span {
-  color: #7ca4e0;
-}
-
 .home-subtitle {
   font-size: 1rem;
   color: #d4e3f3;
@@ -26,14 +26,31 @@
   line-height: 1.5;
 }
 
-.button-group {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
+/* 🔥 MADE WIDER — looks much cleaner */
+.login-form {
+  display: grid;
+  gap: 16px;
+  width: 420px;             /* 🔥 widened from 340px */
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 10px;
 }
 
+/* Inputs also widened + slightly more padding for balance */
+.login-form input {
+  padding: 16px 18px;       /* slightly larger */
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+  font-size: 15px;
+  outline: none;
+  width: 100%;              /* ensures inputs stretch across new width */
+}
+
+/* Buttons (unchanged) */
 .login-btn {
-  padding: 10px 20px;
+  padding: 12px 20px;
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: #fff;
@@ -45,4 +62,29 @@
 .login-btn:hover {
   background: rgba(255, 255, 255, 0.35);
   transform: translateY(-2px);
+}
+
+/* Login choice buttons */
+.button-group {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+/* Register link still clickable */
+.register-link {
+  cursor: pointer;
+  text-decoration: underline;
+  color: #7ca4e0;
+  font-weight: 600;
+}
+
+.message {
+  color: #ffbaba;
+  margin-top: 8px;
+}
+
+.toggle-link {
+  color: #d4e3f3;
+  font-size: 0.9rem;
 }
