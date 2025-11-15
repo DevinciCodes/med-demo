@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // src/lib/api.js
 import { API_BASE_URL } from "../config";
 import { auth } from "../firebase";
