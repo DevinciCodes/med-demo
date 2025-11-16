@@ -21,6 +21,7 @@ import {
 
 import MedAutocomplete from "../components/MedAutoComplete";
 import { MEDICATION_NAMES } from "../components/medNamesToBeReplacedWithFirebase";
+import { checkDrugInteractionsWithAI } from "../utils/aiDrugInteractionService";
 
 // ===== Shared look & feel =====
 const container   = { maxWidth: 960, margin: "0 auto" };
@@ -35,30 +36,6 @@ const buttonBase  = { padding: "10px 14px", borderRadius: 10, border: "1px solid
 const btnPrimary  = { ...buttonBase, background: "#4176c6ff", color: "#fff" };
 const btnGhost    = { ...buttonBase, background: "#f8fafc", color: "#0f172a", border: "1px solid #e5e7eb" };
 const statCard    = { ...card, marginBottom: 0, padding: "12px 16px", minWidth: 180 };
-
-// ===== Interaction rules =====
-const INTERACTIONS = {
-  warfarin: ["ibuprofen", "naproxen", "aspirin", "amiodarone", "fluconazole"],
-  ibuprofen: ["warfarin"],
-  simvastatin: ["clarithromycin", "erythromycin", "grapefruit"],
-  sildenafil: ["nitroglycerin", "isosorbide mononitrate", "isosorbide dinitrate"],
-  metformin: ["cimetidine"],
-};
-function findConflicts(meds) {
-  const names = meds.map((m) => (m.name || "").trim().toLowerCase());
-  const conflicts = [];
-  for (let i = 0; i < names.length; i++) {
-    const a = names[i];
-    const badWith = INTERACTIONS[a] || [];
-    for (let j = i + 1; j < names.length; j++) {
-      const b = names[j];
-      if (badWith.includes(b) || (INTERACTIONS[b] || []).includes(a)) {
-        conflicts.push({ a: meds[i].name || "", b: meds[j].name || "" });
-      }
-    }
-  }
-  return conflicts;
-}
 
 // ===== Week plan helpers =====
 const NOW = new Date();
@@ -281,11 +258,16 @@ export default function PatientDashboard() {
     [medOptionsAll, medOptionsOtc]
   );
 
-  // ---- Derived
-  const conflicts = useMemo(() => findConflicts(meds), [meds]);
+  // ====== AI interaction state (shared between overview & alerts) ======
+  const [aiSummary, setAiSummary] = useState("");
+  const [aiInteractions, setAiInteractions] = useState([]);
+  const [aiChecking, setAiChecking] = useState(false);
+  const [aiError, setAiError] = useState(null);
+
+  // ---- Derived stats (now uses AI interactions count)
   const stats = useMemo(
-    () => ({ active: meds.length, risky: conflicts.length }),
-    [meds.length, conflicts.length]
+    () => ({ active: meds.length, risky: aiInteractions.length }),
+    [meds.length, aiInteractions.length]
   );
 
   // ---- Add OTC (uses same med list as provider dash)
@@ -389,38 +371,107 @@ export default function PatientDashboard() {
     );
   };
 
-  const AlertsSection = () => (
-    <SectionCard title="Interaction Alerts">
-      {conflicts.length === 0 ? (
-        <div style={{ color: "#64748b" }}>
-          No known interactions in this list.
-        </div>
-      ) : (
-        <ul style={{ margin: 0, paddingLeft: 18 }}>
-          {conflicts.map((p, i) => (
-            <li
-              key={i}
-              style={{
-                display: "flex",
-                gap: 8,
-                alignItems: "flex-start",
-                marginBottom: 6,
-              }}
-            >
-              <span style={{ fontSize: 18 }}>⚠️</span>
-              <div>
-                <strong>{p.a}</strong> may interact with{" "}
-                <strong>{p.b}</strong>.
-                <div style={{ fontSize: 12, color: "#64748b" }}>
-                  (Demo rules) Advise patient to consult provider/pharmacist.
+  const AlertsSection = () => {
+    const medNames = meds.map((m) => m.name).filter(Boolean);
+
+    const handleCheckInteractions = async () => {
+      try {
+        setAiChecking(true);
+        setAiError(null);
+        setAiSummary("");
+        setAiInteractions([]);
+
+        const result = await checkDrugInteractionsWithAI(medNames);
+
+        setAiSummary(result.summary || "");
+        setAiInteractions(result.interactions || []);
+      } catch (err) {
+        console.error(err);
+        setAiError("Unable to check interactions right now.");
+      } finally {
+        setAiChecking(false);
+      }
+    };
+
+    const rightButton = (
+      <button
+        className="login-btn"
+        style={btnPrimary}
+        onClick={handleCheckInteractions}
+        disabled={aiChecking || medNames.length < 2}
+      >
+        {aiChecking ? "Checking…" : "Check Interactions"}
+      </button>
+    );
+
+    return (
+      <SectionCard title="Interaction Alerts" right={rightButton}>
+        {medNames.length < 2 && (
+          <div style={{ ...muted, fontSize: 13, marginBottom: 8 }}>
+            Add at least two medications to check for interactions.
+          </div>
+        )}
+
+        {aiError && (
+          <div style={{ color: "#b91c1c", fontSize: 14, marginBottom: 8 }}>
+            {aiError}
+          </div>
+        )}
+
+        {aiSummary && (
+          <div style={{ fontSize: 14, marginBottom: 8 }}>
+            <strong>Summary:</strong> {aiSummary}
+          </div>
+        )}
+
+        {!aiChecking && !aiError && !aiSummary && aiInteractions.length === 0 && medNames.length >= 2 && (
+          <div style={{ ...muted, fontSize: 13 }}>
+            Click “Check Interactions” to analyze your current medications using
+            an AI assistant. This is for information only and does not replace
+            medical advice from your provider or pharmacist.
+          </div>
+        )}
+
+        {aiInteractions.length > 0 && (
+          <ul style={{ margin: 0, paddingLeft: 18 }}>
+            {aiInteractions.map((interaction, idx) => (
+              <li
+                key={idx}
+                style={{
+                  marginBottom: 10,
+                  fontSize: 14,
+                }}
+              >
+                <div style={{ marginBottom: 2 }}>
+                  <strong>
+                    {interaction.drugs?.join(" ↔ ") || "Interaction"}
+                  </strong>
                 </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </SectionCard>
-  );
+                {interaction.severity && (
+                  <div style={{ fontSize: 13 }}>
+                    <strong>Severity:</strong>{" "}
+                    <span style={{ textTransform: "uppercase" }}>
+                      {interaction.severity}
+                    </span>
+                  </div>
+                )}
+                {interaction.description && (
+                  <div style={{ fontSize: 13 }}>
+                    <strong>Details:</strong> {interaction.description}
+                  </div>
+                )}
+                {interaction.action && (
+                  <div style={{ fontSize: 13, color: "#4b5563" }}>
+                    <strong>Suggested action:</strong> {interaction.action}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </SectionCard>
+    );
+  };
 
   const MedsSection = () => {
     const [filter, setFilter] = useState("");
