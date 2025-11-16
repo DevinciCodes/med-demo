@@ -6,7 +6,7 @@ import ProviderDashboard from "./pages/Provider_Dashboard";
 import ForcePasswordReset from "./pages/ForcePasswordReset";
 import Admin from "./pages/Admin";
 import ProviderRegister from "./pages/ProviderRegister";
-
+import RequireProvider from "./components/RequireProvider";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import AdminLogin from "./pages/AdminLogin";
@@ -66,7 +66,14 @@ export default function App() {
       <Route path="/patients/:uid" element={<PatientRoute />} />
 
       {/* Provider (ungarded for now) */}
-      <Route path="/provider" element={<ProviderDashboard />} />
+      <Route
+        path="/provider"
+        element={
+          <RequireProvider>
+            <ProviderDashboard />
+          </RequireProvider>
+        }
+      />
       
       <Route path="/force-password-reset" element={<ForcePasswordReset />} />
    

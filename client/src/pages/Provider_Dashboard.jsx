@@ -550,6 +550,7 @@ export default function ProviderDashboard() {
 
       const medsCol = collection(db, "Patients", p.id, "Medications");
       const medsQ = query(medsCol, orderBy("createdAt", "desc"), limit(100));
+      // eslint-disable-next-line no-unused-vars
       const unsub = onSnapshot(medsQ, (qs) => {
         const arr = [];
         qs.forEach((d) => arr.push({ id: d.id, ...d.data() }));

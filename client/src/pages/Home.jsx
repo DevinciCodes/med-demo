@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginUser, auth, db } from "../firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
 import { doc, getDoc } from "firebase/firestore";
 import "../home.css";
@@ -49,14 +49,23 @@ export default function Home() {
       }
 
       if (!role) throw new Error("Choose Patient or Provider first.");
-      await loginUser(em, password);
 
+      // Firebase auth login
+      await loginUser(em, password);
       const u = auth.currentUser;
       if (!u) throw new Error("No Firebase user after login.");
 
       if (role === "patient") {
+        // 🔒 Must exist in Patients collection
         const snap = await getDoc(doc(db, "Patients", u.uid));
-        const mustReset = snap.exists() ? snap.data()?.mustReset === true : false;
+        if (!snap.exists()) {
+          await signOut(auth);
+          throw new Error(
+            "No patient account found. Please contact your provider."
+          );
+        }
+
+        const mustReset = snap.data()?.mustReset === true;
 
         if (mustReset) {
           navigate("/force-password-reset", { replace: true });
@@ -64,7 +73,24 @@ export default function Home() {
           navigate(`/patients/${u.uid}`, { replace: true });
         }
       } else {
-        // provider → dashboard
+        // role === "provider"
+
+        // 🔒 Must exist in Providers collection
+        const provSnap = await getDoc(doc(db, "Providers", u.uid));
+        if (!provSnap.exists()) {
+          await signOut(auth);
+          throw new Error(
+            "No provider account found. Your account may not be registered or approved yet."
+          );
+        }
+
+        // Optional: enforce approved flag if you store one
+        // const data = provSnap.data();
+        // if (data.approved === false) {
+        //   await signOut(auth);
+        //   throw new Error("Your provider account is pending approval.");
+        // }
+
         navigate("/provider", { replace: true });
       }
     } catch (err) {
@@ -94,7 +120,6 @@ export default function Home() {
           </div>
         ) : (
           <>
-            {/* 👇 New glassy card around the login form */}
             <div className="auth-card">
               <form className="login-form" onSubmit={handleSubmit} noValidate>
                 <h2 className="login-title">{role.toUpperCase()} LOGIN</h2>
@@ -123,7 +148,6 @@ export default function Home() {
                   {status === "loading" ? "Signing in..." : "Login"}
                 </button>
 
-                {/* Provider: Register link */}
                 {role === "provider" ? (
                   <p
                     className="toggle-link register-link"
@@ -141,7 +165,6 @@ export default function Home() {
               </form>
             </div>
 
-            {/* Back button stays just under the card */}
             <div style={{ marginTop: 12 }}>
               <button
                 className="login-btn"
