@@ -1,36 +1,32 @@
+// server/firebaseAdmin.js
 const admin = require("firebase-admin");
-const fs = require("fs");
 const path = require("path");
+const fs = require("fs");
 
 if (!admin.apps.length) {
-  // 1) Try GOOGLE_APPLICATION_CREDENTIALS (file path)
-  const credsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS
-    ? path.resolve(process.cwd(), process.env.GOOGLE_APPLICATION_CREDENTIALS)
-    : null;
-
-  let credential;
-
   try {
-    if (credsPath && fs.existsSync(credsPath)) {
-      const key = require(credsPath);
-      credential = admin.credential.cert(key);
-      console.log("[firebaseAdmin] using service account file:", credsPath);
-    } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-      // 2) Or try JSON string in env
-      const key = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-      credential = admin.credential.cert(key);
-      console.log("[firebaseAdmin] using service account from env JSON");
-    } else {
-      // 3) Fallback to ADC (gcloud / Cloud Run / etc.)
-      credential = admin.credential.applicationDefault();
-      console.log("[firebaseAdmin] using applicationDefault credentials");
+    // ✅ Look inside server/keys/serviceAccount.json
+    const serviceAccountPath = path.join(__dirname, "keys", "serviceAccount.json");
+
+    if (!fs.existsSync(serviceAccountPath)) {
+      throw new Error(
+        `Service account file not found at: ${serviceAccountPath}. ` +
+        `Make sure server/keys/serviceAccount.json exists.`
+      );
     }
+
+    const serviceAccount = require(serviceAccountPath);
+
+    console.log("[firebaseAdmin] using service account:", serviceAccountPath);
+
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      projectId: serviceAccount.project_id, // "pillars-e65ea"
+    });
   } catch (e) {
-    console.error("[firebaseAdmin] credential init failed:", e);
+    console.error("[firebaseAdmin] Failed to load service account:", e);
     throw e;
   }
-
-  admin.initializeApp({ credential });
 }
 
 module.exports = { admin };
