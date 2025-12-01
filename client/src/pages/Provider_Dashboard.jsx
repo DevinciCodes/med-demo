@@ -1,3 +1,5 @@
+// src/pages/ProviderDashboard.jsx
+
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -21,6 +23,8 @@ import {
 import MedAutocomplete from "../components/MedAutoComplete";
 import { MEDICATION_NAMES } from "../components/medNamesToBeReplacedWithFirebase";
 import ProviderSidebar from "../components/ProviderSidebar";
+import AlertsInteractionPanel from "../components/AlertsInteractionPanel";
+import { checkDrugInteractionsWithAI } from "../utils/aiDrugInteractionService";
 
 // ===== Shared look & feel (aligned with patient dashboard) =====
 const container = { maxWidth: 960, margin: "0 auto" };
@@ -117,7 +121,7 @@ const bannerErr = {
   color: "#991b1b",
 };
 
-// ===== Interaction rules =====
+// ===== Interaction rules (static demo) =====
 const INTERACTIONS = {
   warfarin: ["ibuprofen", "naproxen", "aspirin", "amiodarone", "fluconazole"],
   ibuprofen: ["warfarin"],
@@ -140,6 +144,60 @@ function findConflicts(meds) {
     }
   }
   return conflicts;
+}
+
+// ===== AI severity helpers =====
+const SEVERITY_ORDER = {
+  none: 0,
+  minor: 1,
+  moderate: 2,
+  major: 3,
+};
+
+function getHighestSeverity(interactions = []) {
+  let highest = "none";
+
+  for (const i of interactions) {
+    const sev = String(i.severity || "").toLowerCase();
+    if (SEVERITY_ORDER[sev] > SEVERITY_ORDER[highest]) {
+      highest = sev;
+    }
+  }
+
+  return highest;
+}
+
+function mapSeverityToLabel(highest) {
+  switch (highest) {
+    case "major":
+      return {
+        label: "HIGH",
+        color: "#b91c1c",
+        bg: "#fee2e2",
+        border: "#fecaca",
+      };
+    case "moderate":
+      return {
+        label: "MEDIUM",
+        color: "#92400e",
+        bg: "#fef3c7",
+        border: "#fde68a",
+      };
+    case "minor":
+      return {
+        label: "LOW",
+        color: "#065f46",
+        bg: "#ecfdf5",
+        border: "#a7f3d0",
+      };
+    default:
+      return {
+        label: "NONE",
+        color: "#334155",
+        bg: "#e2e8f0",
+        border: "#cbd5e1",
+      };
+  }
 }
 
 // ===== fallback mock data =====
@@ -370,6 +428,75 @@ export default function ProviderDashboard() {
       setErr("Could not copy to clipboard.");
     }
   };
+
+  // ===== bulk alerts (alerts tab) =====
+  const [alertsLoading, setAlertsLoading] = useState(false);
+  const [alertsPatients, setAlertsPatients] = useState([]);
+  const [alertsByPatient, setAlertsByPatient] = useState({});
+
+  // 🌟 NEW: Load saved interaction results on mount / when institution is known
+  useEffect(() => {
+    if (!myInstLower) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const patientsCol = collection(db, "Patients");
+        const qPatients = query(
+          patientsCol,
+          where("institutionLower", "==", myInstLower),
+          limit(200)
+        );
+        const snap = await getDocs(qPatients);
+
+        const patients = [];
+        const storedAlerts = {};
+
+        snap.forEach((d) => {
+          const data = d.data() || {};
+          const name =
+            data.name ||
+            `${data.firstName || ""} ${data.lastName || ""}`.trim();
+
+          const patient = {
+            id: d.id,
+            name: name || "(Unnamed patient)",
+            email: data.email || "",
+            dob: data.dob || "",
+          };
+          patients.push(patient);
+
+          const ic = data.interactionCheck;
+          if (ic && ic.highestSeverity) {
+            const highest = ic.highestSeverity || "none";
+            const labelInfo = mapSeverityToLabel(highest);
+            const summary =
+              ic.summary ||
+              (highest === "none"
+                ? "No clinically meaningful interactions identified for this combination."
+                : `Overall risk for this patient is ${labelInfo.label}.`);
+
+            storedAlerts[d.id] = {
+              highestSeverity: highest,
+              labelInfo,
+              summary,
+            };
+          }
+        });
+
+        if (!cancelled) {
+          setAlertsPatients(patients);
+          setAlertsByPatient(storedAlerts);
+        }
+      } catch (e) {
+        console.error("Failed to load stored alerts:", e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [myInstLower]);
 
   // ====== CREATE PATIENT ======
   const handleCreatePatient = async (e) => {
@@ -704,6 +831,136 @@ export default function ProviderDashboard() {
     navigate("/provider/prescription", { state: { patient: selectedPatient } });
   };
 
+  // ====== BULK CHECK (alerts tab) ======
+  const handleBulkCheckInteractions = async () => {
+    setMsg("");
+    setErr("");
+
+    if (!myInstLower) {
+      setErr("Cannot run alerts: your provider Institution is missing.");
+      return;
+    }
+
+    setAlertsLoading(true);
+    setAlertsPatients([]);
+    setAlertsByPatient({});
+
+    try {
+      // 1) Load all patients for this institution
+      const patientsCol = collection(db, "Patients");
+      const qPatients = query(
+        patientsCol,
+        where("institutionLower", "==", myInstLower),
+        limit(200)
+      );
+      const snap = await getDocs(qPatients);
+
+      const patients = snap.docs.map((d) => {
+        const data = d.data() || {};
+        const name =
+          data.name ||
+          `${data.firstName || ""} ${data.lastName || ""}`.trim();
+
+        return {
+          id: d.id,
+          name: name || "(Unnamed patient)",
+          email: data.email || "",
+          dob: data.dob || "",
+        };
+      });
+
+      setAlertsPatients(patients);
+
+      const results = {};
+
+      // 2) For each patient, load meds + ask AI
+      for (const p of patients) {
+        const medsCol = collection(db, "Patients", p.id, "Medications");
+        const medsSnap = await getDocs(medsCol);
+        const medNames = medsSnap.docs
+          .map((docSnap) => (docSnap.data().name || "").trim())
+          .filter(Boolean);
+
+        if (medNames.length < 2) {
+          const highest = "none";
+          const labelInfo = mapSeverityToLabel(highest);
+          const summary =
+            "Not enough medications on file to check interactions (need ≥ 2).";
+
+          results[p.id] = {
+            highestSeverity: highest,
+            labelInfo,
+            summary,
+          };
+
+          await updateDoc(doc(db, "Patients", p.id), {
+            interactionCheck: {
+              highestSeverity: highest,
+              summary,
+              checkedAt: serverTimestamp(),
+            },
+          });
+
+          continue;
+        }
+
+        try {
+          const aiResult = await checkDrugInteractionsWithAI(medNames);
+          const highest = getHighestSeverity(aiResult.interactions);
+          const labelInfo = mapSeverityToLabel(highest);
+
+          const summary =
+            aiResult.summary ||
+            (highest === "none"
+              ? "No clinically meaningful interactions identified for this combination."
+              : `Overall risk for this patient is ${labelInfo.label}.`);
+
+          results[p.id] = {
+            highestSeverity: highest,
+            labelInfo,
+            summary,
+          };
+
+          await updateDoc(doc(db, "Patients", p.id), {
+            interactionCheck: {
+              highestSeverity: highest,
+              summary,
+              checkedAt: serverTimestamp(),
+            },
+          });
+        } catch (err) {
+          console.error("AI check failed for patient", p.id, err);
+
+          const highest = "none";
+          const labelInfo = mapSeverityToLabel(highest);
+          const summary =
+            "Unable to check interactions for this patient right now.";
+
+          results[p.id] = {
+            highestSeverity: highest,
+            labelInfo,
+            summary,
+          };
+
+          await updateDoc(doc(db, "Patients", p.id), {
+            interactionCheck: {
+              highestSeverity: highest,
+              summary,
+              checkedAt: serverTimestamp(),
+            },
+          });
+        }
+      }
+
+      setAlertsByPatient(results);
+    } catch (e) {
+      console.error(e);
+      setErr(`Bulk interaction check failed: ${e.message}`);
+    } finally {
+      setAlertsLoading(false);
+    }
+  };
+
   return (
     <div style={{ display: "flex" }}>
       <ProviderSidebar />
@@ -1027,9 +1284,7 @@ export default function ProviderDashboard() {
                           <input
                             style={input}
                             value={visitLocation}
-                            onChange={(e) =>
-                              setVisitLocation(e.target.value)
-                            }
+                            onChange={(e) => setVisitLocation(e.target.value)}
                             placeholder="Clinic A, Room 4"
                           />
                         </div>
@@ -1369,6 +1624,9 @@ export default function ProviderDashboard() {
                           </button>
                         </div>
                       </div>
+
+                      {/* 🔍 AI-assisted interactions just for this patient */}
+                      <AlertsInteractionPanel patientId={selectedPatient.id} />
                     </>
                   )}
 
@@ -1472,34 +1730,115 @@ export default function ProviderDashboard() {
             <div style={{ ...card, marginBottom: 16 }}>
               <div style={cardHeader}>
                 <h2 style={h2}>Interaction Alerts</h2>
+                <button
+                  type="button"
+                  style={btnPrimary}
+                  onClick={handleBulkCheckInteractions}
+                  disabled={alertsLoading || !myInstLower}
+                >
+                  {alertsLoading ? "Checking all patients…" : "Check all patients"}
+                </button>
               </div>
-              {providerConflicts.length === 0 ? (
-                <div style={{ color: "#64748b" }}>
-                  No known interactions in this list.
-                </div>
-              ) : (
-                <ul style={{ margin: 0, paddingLeft: 18 }}>
-                  {providerConflicts.map((p, i) => (
-                    <li
-                      key={i}
-                      style={{
-                        display: "flex",
-                        gap: 8,
-                        alignItems: "flex-start",
-                        marginBottom: 6,
-                      }}
-                    >
-                      <span style={{ fontSize: 18 }}>⚠️</span>
-                      <div>
-                        <strong>{p.a}</strong> may interact with{" "}
-                        <strong>{p.b}</strong>.
-                        <div style={{ fontSize: 12, color: "#64748b" }}>
-                          (Demo rules) Review this patient's regimen.
+
+              <p style={{ ...muted, marginBottom: 12 }}>
+                Runs an AI-assisted interaction check for each patient at your
+                institution that you can access. Results are not a substitute
+                for clinical judgment.
+              </p>
+
+              {/* Bulk AI results */}
+              {alertsLoading && (
+                <p style={{ ...muted, marginTop: 8 }}>
+                  Running interaction checks across patients…
+                </p>
+              )}
+
+              {!alertsLoading && alertsPatients.length === 0 && (
+                <p style={{ ...muted, marginTop: 8 }}>
+                  No patients loaded yet. Click &ldquo;Check all patients&rdquo;
+                  to see interaction summaries.
+                </p>
+              )}
+
+              {!alertsLoading && alertsPatients.length > 0 && (
+                <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                  {alertsPatients.map((p) => {
+                    const info = alertsByPatient[p.id];
+                    const labelInfo = info?.labelInfo;
+
+                    const badgeStyle = labelInfo
+                      ? {
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: "4px 10px",
+                          borderRadius: 999,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: labelInfo.color,
+                          background: labelInfo.bg,
+                          border: `1px solid ${labelInfo.border}`,
+                          whiteSpace: "nowrap",
+                        }
+                      : { display: "none" };
+
+                    return (
+                      <li
+                        key={p.id}
+                        style={{
+                          padding: "10px 0",
+                          borderTop: "1px solid #e5e7eb",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 12,
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontWeight: 600, color: "#0f172a" }}>
+                            {p.name}
+                          </div>
+                          <div style={{ fontSize: 12, color: "#64748b" }}>
+                            {info
+                              ? info.summary
+                              : "No interaction check has been run for this patient in this session."}
+                          </div>
                         </div>
-                      </div>
-                    </li>
-                  ))}
+                        {labelInfo && <span style={badgeStyle}>{labelInfo.label}</span>}
+                      </li>
+                    );
+                  })}
                 </ul>
+              )}
+
+              {/* Optional: keep your simple rule-based conflicts for the currently selected patient */}
+              {providerConflicts.length > 0 && (
+                <div style={{ marginTop: 24 }}>
+                  <h3 style={{ ...h2, fontSize: 16, marginBottom: 8 }}>
+                    Current Patient (demo rules)
+                  </h3>
+                  <ul style={{ margin: 0, paddingLeft: 18 }}>
+                    {providerConflicts.map((p, i) => (
+                      <li
+                        key={i}
+                        style={{
+                          display: "flex",
+                          gap: 8,
+                          alignItems: "flex-start",
+                          marginBottom: 6,
+                        }}
+                      >
+                        <span style={{ fontSize: 18 }}>⚠️</span>
+                        <div>
+                          <strong>{p.a}</strong> may interact with{" "}
+                          <strong>{p.b}</strong>.
+                          <div style={{ fontSize: 12, color: "#64748b" }}>
+                            (Static demo rules) Review this patient's regimen.
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
           )}

@@ -17,6 +17,7 @@ import {
   addDoc,
   deleteDoc,
   serverTimestamp,
+  setDoc,        // ✅ NEW: to save AI interaction results
 } from "firebase/firestore";
 
 import MedAutocomplete from "../components/MedAutoComplete";
@@ -263,6 +264,40 @@ export default function PatientDashboard() {
   const [aiInteractions, setAiInteractions] = useState([]);
   const [aiChecking, setAiChecking] = useState(false);
   const [aiError, setAiError] = useState(null);
+  const [aiLastUpdated, setAiLastUpdated] = useState(null); // ✅ track when result was last saved
+
+  // ✅ Subscribe to provider/patient-saved AI interaction result in Firestore
+  useEffect(() => {
+    if (!patientId) {
+      setAiSummary("");
+      setAiInteractions([]);
+      setAiLastUpdated(null);
+      return;
+    }
+    const ref = doc(db, "Patients", patientId, "AIInteractions", "latest");
+
+    const unsub = onSnapshot(
+      ref,
+      (snap) => {
+        if (!snap.exists()) {
+          setAiSummary("");
+          setAiInteractions([]);
+          setAiLastUpdated(null);
+          return;
+        }
+        const data = snap.data() || {};
+        setAiSummary(data.summary || "");
+        setAiInteractions(data.interactions || []);
+        const ts = data.updatedAt?.toDate?.();
+        setAiLastUpdated(ts || null);
+      },
+      (err) => {
+        console.error("Error reading AI interactions:", err);
+      }
+    );
+
+    return () => unsub();
+  }, [patientId]);
 
   // ---- Derived stats (now uses AI interactions count)
   const stats = useMemo(
@@ -378,13 +413,31 @@ export default function PatientDashboard() {
       try {
         setAiChecking(true);
         setAiError(null);
+
+        // Clear only while checking; subscription will repopulate from Firestore
         setAiSummary("");
         setAiInteractions([]);
 
         const result = await checkDrugInteractionsWithAI(medNames);
 
+        // Local UI update
         setAiSummary(result.summary || "");
         setAiInteractions(result.interactions || []);
+
+        // ✅ Persist result so provider & patient both see the same report later
+        if (patientId) {
+          const ref = doc(db, "Patients", patientId, "AIInteractions", "latest");
+          await setDoc(
+            ref,
+            {
+              summary: result.summary || "",
+              interactions: result.interactions || [],
+              updatedAt: serverTimestamp(),
+              source: "patient", // or "provider" when run from provider UI
+            },
+            { merge: true }
+          );
+        }
       } catch (err) {
         console.error(err);
         setAiError("Unable to check interactions right now.");
@@ -396,7 +449,7 @@ export default function PatientDashboard() {
     const rightButton = (
       <button
         className="login-btn"
-        style={btnPrimary}
+        style={btnPrimary} // 🔵 blue button
         onClick={handleCheckInteractions}
         disabled={aiChecking || medNames.length < 2}
       >
@@ -412,6 +465,12 @@ export default function PatientDashboard() {
           </div>
         )}
 
+        {aiLastUpdated && (
+          <div style={{ fontSize: 12, color: "#64748b", marginBottom: 6 }}>
+            Last checked: {aiLastUpdated.toLocaleString()}
+          </div>
+        )}
+
         {aiError && (
           <div style={{ color: "#b91c1c", fontSize: 14, marginBottom: 8 }}>
             {aiError}
@@ -424,13 +483,17 @@ export default function PatientDashboard() {
           </div>
         )}
 
-        {!aiChecking && !aiError && !aiSummary && aiInteractions.length === 0 && medNames.length >= 2 && (
-          <div style={{ ...muted, fontSize: 13 }}>
-            Click “Check Interactions” to analyze your current medications using
-            an AI assistant. This is for information only and does not replace
-            medical advice from your provider or pharmacist.
-          </div>
-        )}
+        {!aiChecking &&
+          !aiError &&
+          !aiSummary &&
+          aiInteractions.length === 0 &&
+          medNames.length >= 2 && (
+            <div style={{ ...muted, fontSize: 13 }}>
+              Click “Check Interactions” to analyze your current medications
+              using an AI assistant. This is for information only and does not
+              replace medical advice from your provider or pharmacist.
+            </div>
+          )}
 
         {aiInteractions.length > 0 && (
           <ul style={{ margin: 0, paddingLeft: 18 }}>

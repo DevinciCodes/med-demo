@@ -7,6 +7,9 @@ import {
   onSnapshot,
   orderBy,
   query,
+  doc,            // ✅ for AIInteractions doc
+  setDoc,         // ✅ to save results
+  serverTimestamp // ✅ timestamp for last update
 } from "firebase/firestore";
 import { checkDrugInteractionsWithAI } from "../utils/aiDrugInteractionService";
 
@@ -18,6 +21,7 @@ function AlertsInteractionPanel({ patientId }) {
   const [aiSummary, setAiSummary] = useState("");
   const [aiInteractions, setAiInteractions] = useState([]);
   const [error, setError] = useState(null);
+  const [aiLastUpdated, setAiLastUpdated] = useState(null); // optional, for “last checked”
 
   // 1) Subscribe to this patient's Medications
   useEffect(() => {
@@ -49,10 +53,47 @@ function AlertsInteractionPanel({ patientId }) {
     return () => unsub();
   }, [patientId]);
 
+  // 2) 🔁 Stay in sync with shared AI result:
+  //    Patients/{patientId}/AIInteractions/latest
+  useEffect(() => {
+    if (!patientId) {
+      setAiSummary("");
+      setAiInteractions([]);
+      setAiLastUpdated(null);
+      return;
+    }
+
+    const ref = doc(db, "Patients", patientId, "AIInteractions", "latest");
+
+    const unsub = onSnapshot(
+      ref,
+      (snap) => {
+        if (!snap.exists()) {
+          setAiSummary("");
+          setAiInteractions([]);
+          setAiLastUpdated(null);
+          return;
+        }
+        const data = snap.data() || {};
+        setAiSummary(data.summary || "");
+        setAiInteractions(data.interactions || []);
+        const ts = data.updatedAt?.toDate?.();
+        setAiLastUpdated(ts || null);
+      },
+      (err) => {
+        console.error("Error loading AI interactions:", err);
+      }
+    );
+
+    return () => unsub();
+  }, [patientId]);
+
   const handleCheckInteractions = async () => {
     try {
       setChecking(true);
       setError(null);
+
+      // Clear local UI while checking – Firestore subscription will repopulate
       setAiSummary("");
       setAiInteractions([]);
 
@@ -60,8 +101,24 @@ function AlertsInteractionPanel({ patientId }) {
 
       const result = await checkDrugInteractionsWithAI(medNames);
 
+      // Local UI update so provider sees the result immediately
       setAiSummary(result.summary);
-      setAiInteractions(result.interactions);
+      setAiInteractions(result.interactions || []);
+
+      // ✅ Persist result in Firestore so it survives logout/refresh
+      if (patientId) {
+        const ref = doc(db, "Patients", patientId, "AIInteractions", "latest");
+        await setDoc(
+          ref,
+          {
+            summary: result.summary || "",
+            interactions: result.interactions || [],
+            updatedAt: serverTimestamp(),
+            source: "provider", // so you can tell who last ran it
+          },
+          { merge: true }
+        );
+      }
     } catch (err) {
       console.error(err);
       setError("Unable to check interactions right now.");
@@ -108,6 +165,12 @@ function AlertsInteractionPanel({ patientId }) {
       {medNames.length < 2 && !loadingMeds && (
         <p className="mt-2 text-xs text-gray-500">
           Add at least two medications to check for interactions.
+        </p>
+      )}
+
+      {aiLastUpdated && (
+        <p className="mt-2 text-xs text-gray-500">
+          Last checked: {aiLastUpdated.toLocaleString()}
         </p>
       )}
 
