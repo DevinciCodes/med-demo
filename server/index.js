@@ -1,5 +1,5 @@
 // server/index.js
-require("dotenv").config();
+require("dotenv").config({ path: "../.env" });
 
 const express = require("express");
 const cors = require("cors");
@@ -18,13 +18,16 @@ app.use(
 );
 app.use(express.json());
 
-// ===== OpenAI API key (env or hard fallback for dev) =====
 const rawEnvKey = process.env.OPENAI_API_KEY;
-const OPENAI_API_KEY =
-  rawEnvKey && rawEnvKey.trim().length > 0
-    ? rawEnvKey.trim()
-    : "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"
+const OPENAI_API_KEY = rawEnvKey ? rawEnvKey.trim() : "";
 
+if (!OPENAI_API_KEY) {
+  console.error(
+    "❌ Missing OPENAI_API_KEY in environment. Set it in server/.env before starting the server."
+  );
+  // If you want to hard fail on startup, uncomment:
+  // process.exit(1);
+}
 
 console.log(
   "OPENAI_API_KEY present in env?",
